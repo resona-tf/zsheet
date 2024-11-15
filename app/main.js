@@ -448,175 +448,18 @@ window.onload = async function(){
 		}
 
 
-
-
-
-		if(mode == "payment"){
-			progressAddStep(2)
-			let createPaymentDataFunc = `${ApiDomain}/crm/v2/functions/y_test02/actions/execute?auth_type=apikey&zapikey=1003.d89544f13ce46973dab74091db544213.e1e53e7f681a1b2b5a1cdd5243e1e74f`
-			let progressMsg = document.getElementById("progressMsg")
-			let closeBtn = document.getElementById("closeBtn")
-			closeBtn.addEventListener("click", async function(){
-				// debugger
-				await ZOHO.CRM.UI.Record.open({Entity:data.Entity,RecordID:0})
-				await ZOHO.CRM.UI.Record.open({Entity:data.Entity,RecordID:data.EntityId[0]})
-				// let ORG = await ZOHO.CRM.CONFIG.getOrgInfo()
-				// let Modules = await ZOHO.CRM.META.getModules()
-				// let moduleInfo = Modules.modules.find((module) => { return module.api_name == data.Entity })
-				// window.open(`https://crm.zoho.jp/crm/${ORG.org[0]["domain_name"]}/tab/${moduleInfo["module_name"]}/${data.EntityId}`, "_blank")
-				// parent.close()
-			})
-
-			document.querySelector("#invoice").style.display = "none"
-			document.querySelector("#payment").style.display = "block"
-			document.querySelector("#estimate").style.display = "none"
-			
-			templateUrl = await ZOHO.CRM.API.getOrgVariable("Payment_Template_Url")
-			if(!templateUrl.Success){
-				ZOHO.CRM.UI.Popup.close()
-				return
-			}
-			progressNext()
-
-
-
-			//####支払明細作成だけ走らせる場合はここから####
-			// progressMsg.innerHTML = "支払明細書を作成中"
-			// progressNext()
-			// templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#payTemplateSelect"))
-			// zSheetTemplate = document.getElementById("payTemplateSelect").value
-			// let workbookUrl = await createPaymentViaSheets(widgetData)
-			//####支払明細作成だけ走らせる場合はここまで####
-
-
-
-
-			progressMsg.innerHTML = "支払データを作成中"
-			// debugger
-			if(paymentDocsOnly != "yes"){
-				ZOHO.CRM.FUNCTIONS.execute(
-					"y_test02",
-					{
-						"arguments":JSON.stringify({
-							"id":String(data.EntityId)
-						})
-					}
-				).then(async function(funcRecult){
-					await createDocs(funcRecult)
-				})
-			}else{
-				createDocsOnly()
-			}
-
-			async function createDocsOnly(){
-				progressMsg.innerHTML = "支払明細書を作成中"
-				progressNext()
-				templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#payTemplateSelect"))
-				zSheetTemplate = document.getElementById("payTemplateSelect").value
-				let workbookUrl = await createPaymentViaSheets(widgetData)
-
-				if(IP != "61.200.96.103"){
-					let updateData = {
-						"id":data.EntityId[0],
-						"Payment_Doc_Url":workbookUrl
-					}	
-					let updateResult = await ZOHO.CRM.API.updateRecord({
-						Entity:"Gyara_Payment",
-						APIData:updateData
-					})
-				}
-
-				progressMsg.innerHTML = `支払データ作成処理が完了しました。<br>📑<a target="_blank" href="${workbookUrl}">支払明細書を開く</a>`
-				document.getElementById("progress").style.display = "none"
-				document.getElementById("closeBtnArea").style.display = "flex"
-			}
-
-			async function createDocs(funcRecult){
-				if(funcRecult?.details?.output != "支払データの作成が完了しました"){
-					progressMsg.innerHTML = funcRecult?.details?.output ? funcRecult?.details?.output : "支払データの作成中にエラーが発生しました<br><font size=-1>関数エラー："+funcRecult.message+"</font>"
-					document.getElementById("progress").style.display = "none"
-					document.getElementById("closeBtnArea").style.display = "flex"
-					return
-				}
-				progressMsg.innerHTML = "支払明細書を作成中"
-				progressNext()
-				templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#payTemplateSelect"))
-				zSheetTemplate = document.getElementById("payTemplateSelect").value
-				let workbookUrl = await createPaymentViaSheets(widgetData)
-				debugger
-				let userMessages = funcRecult?.details?.userMessage
-				for(let msg of userMessages){
-					let msgInfo = JSON.parse(msg)
-					if(msgInfo.Payment_Info){
-						// let updateData = {
-						// 	"id":msgInfo.Payment_Info.id,
-						// 	"Payment_Doc_Url":workbookUrl
-						// }	
-						// let updateResult = await ZOHO.CRM.API.updateRecord({
-						// 	Entity:"Payments",
-						// 	APIData:updateData
-						// })
-						continue
-					}
-					if(msgInfo.Gyara_Payment_Info){
-						let GyaraPaymentInfo = await Z.getRecord("Gyara_Payment", msgInfo.Gyara_Payment_Info.id)
-						let payDestinationInfo = await Z.getRecord("Payment_Destination_M", GyaraPaymentInfo.Payment_Destination_Name.id)
-						let DocMethod = payDestinationInfo.Doc_Send_Method
-						
-						let updateData = {
-							"id":msgInfo.Gyara_Payment_Info.id,
-							"Payment_Doc_Url":workbookUrl,
-							"Doc_Send_Method":DocMethod,
-							"Payment_Doc_Status":"未処理",
-							"Email":payDestinationInfo.Email,
-						}	
-						let updateResult = await ZOHO.CRM.API.updateRecord({
-							Entity:"Gyara_Payment",
-							APIData:updateData
-						})
-						continue
-					}
-
-				}
-
-				progressMsg.innerHTML = `支払データ作成処理が完了しました。<br>📑<a target="_blank" href="${workbookUrl}">支払明細書を開く</a>`
-				document.getElementById("progress").style.display = "none"
-				document.getElementById("closeBtnArea").style.display = "flex"
-
-			}
-
-
-
-
-
+		// debugger
+		document.querySelector("#invoice").style.display = "block"
+		document.querySelector("#payment").style.display = "none"
+		document.querySelector("#estimate").style.display = "none"
+		templateUrl = await ZOHO.CRM.API.getOrgVariable("Invoice_Template_Url")
+		if(!templateUrl.Success){
+			alert("テンプレートURLが設定されていません。")
+			ZOHO.CRM.UI.Popup.close()
+			return
 		}
+		templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#invTemplateSelect"))
 
-		if(mode == "invoice"){
-			// debugger
-			document.querySelector("#invoice").style.display = "block"
-			document.querySelector("#payment").style.display = "none"
-			document.querySelector("#estimate").style.display = "none"
-			templateUrl = await ZOHO.CRM.API.getOrgVariable("Invoice_Template_Url")
-			if(!templateUrl.Success){
-				alert("テンプレートURLが設定されていません。")
-				ZOHO.CRM.UI.Popup.close()
-				return
-			}
-			templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#invTemplateSelect"))
-		}
-
-		if(mode == "estimate"){
-			document.querySelector("#invoice").style.display = "none"
-			document.querySelector("#payment").style.display = "none"
-			document.querySelector("#estimate").style.display = "block"
-			templateUrl = await ZOHO.CRM.API.getOrgVariable("Estimate_Template_Url")
-			if(!templateUrl.Success){
-				alert("テンプレートURLが設定されていません。")
-				ZOHO.CRM.UI.Popup.close()
-				return
-			}
-			templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#estTemplateSelect"))
-		}
 
 		function templateSelectoerSetup(v, elm){
 			// debugger
