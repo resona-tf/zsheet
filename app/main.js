@@ -81,8 +81,6 @@ window.onload = async function(){
 
 		let templateUrl
 
-		debugger
-
 		function apiCounter(api){
 			if(API_COUNT[api]){
 				API_COUNT[api]++
@@ -524,7 +522,8 @@ window.onload = async function(){
 				break
 			}
 		}
-
+		
+		debugger
 		initInvoiceUI()
 
 		
