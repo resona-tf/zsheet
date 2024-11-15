@@ -46,7 +46,7 @@ let debugRecordId = ""
 //###############　負荷テスト用コード　################
 
 
-const PRDUCTION_ORGID = "90000685150"
+const PRDUCTION_ORGID = "90001619930"
 let ENVIROMENT = "production"
 let ApiDomain = "https://www.zohoapis.jp"
 let fileNameAddition = ""
