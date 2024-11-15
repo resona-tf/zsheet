@@ -525,10 +525,9 @@ window.onload = async function(){
 			}
 		}
 
-		if(mode == "invoice"){initInvoiceUI()}
-		if(mode == "payment"){initPaymentUI()}
-		if(mode == "estimate"){initEstimateUI()}
+		initInvoiceUI()
 
+		
 
 	})
 
