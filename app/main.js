@@ -453,7 +453,7 @@ window.onload = async function(){
 		document.querySelector("#invoice").style.display = "block"
 		document.querySelector("#payment").style.display = "none"
 		document.querySelector("#estimate").style.display = "none"
-		templateUrl = await ZOHO.CRM.API.getOrgVariable("Invoice_Template_Url")
+		templateUrl = await ZOHO.CRM.API.getOrgVariable(TEMPLATE_CRMVAR)
 		if(!templateUrl.Success){
 			alert("テンプレートURLが設定されていません。")
 			ZOHO.CRM.UI.Popup.close()
