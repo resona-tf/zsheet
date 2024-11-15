@@ -80,7 +80,7 @@ window.onload = async function(){
 
 		let templateUrl
 
-
+		debugger
 
 		function apiCounter(api){
 			if(API_COUNT[api]){
