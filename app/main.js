@@ -47,6 +47,7 @@ let debugRecordId = ""
 
 
 const PRDUCTION_ORGID = "90001619930"
+const TEMPLATE_CRMVAR = "Zs_Template"
 let ENVIROMENT = "production"
 let ApiDomain = "https://www.zohoapis.jp"
 let fileNameAddition = ""
