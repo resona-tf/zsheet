@@ -85,7 +85,7 @@
 		<div class="buttonArea">
 			<select name="invTemplateSelect" id="invTemplateSelect" class="form-select w-50"></select>
 			<button id="generateBtn" class="btn btn-primary ms-3">
-				<div id="generateBtnText" class="">請求書を作成</div>
+				<div id="generateBtnText" class="">作成</div>
 				<div id="generateBtnInProgress" class="spinner-border spinner-border-sm text-light" width="0%"
 					role="status" style="display:none;">
 					<span class="visually-hidden">Loading...</span>
@@ -99,40 +99,17 @@
 					合算請求
 				</label>
 			</div> -->
-			<div class="form-check createOptions input-group">
+			<!-- <div class="form-check createOptions input-group">
 				<form>
 					<input name="stamp" class="form-check-inline" type="checkbox" id="remindCheck">
 					<label class="form-check-label" for="remindCheck">督促/再請求</label>
 					<input name="stamp" class="form-check-inline" type="checkbox" id="refineCheck">
 					<label class="form-check-label" for="refineCheck">訂正版</label>
 				</form>
-			</div>
+			</div> -->
 		</div>
 		<div class="" id="remindReasonArea" style="display: none;">
 			<textarea class="form-control" id="remindReason" rows="2" placeholder="督促/再請求／訂正理由"></textarea>
-		</div>
-	</div>
-	<div id="estimate" class="container" style="display:none;">
-		<div class="buttonArea">
-			<select name="estTemplateSelect" id="estTemplateSelect" class="form-select w-50"></select>
-			<button id="est-generateBtn" class="btn btn-primary ms-3">
-				<div id="est-generateBtnText" class="">見積書を作成</div>
-				<div id="est-generateBtnInProgress" class="spinner-border spinner-border-sm text-light" width="0%" role="status" style="display:none;">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</button>
-		</div>
-	</div>
-	<div id="payment" class="container" style="display:none;">
-		<div class="buttonArea">
-			<select name="payTemplateSelect" id="payTemplateSelect" class="form-select w-50" style="display:none;"></select>
-			<button id="pay-generateBtn" class="btn btn-primary ms-3" style="display:none;">
-				<div id="pay-generateBtnText" class="">支払明細書を作成</div>
-			</button>
-			<div id="pay-generateBtnInProgress" class="spinner-border spinner-border-sm text-light" width="0%" role="status" style="display:none;">
-				<span class="visually-hidden">Loading...</span>
-			</div>
-			<div id="progressMsg"></div>
 		</div>
 	</div>
 	<div id="progress" class="progress">
