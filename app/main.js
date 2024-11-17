@@ -449,8 +449,7 @@ window.onload = async function(){
 
 		// debugger
 		document.querySelector("#invoice").style.display = "block"
-		document.querySelector("#payment").style.display = "none"
-		document.querySelector("#estimate").style.display = "none"
+
 		templateUrl = await ZOHO.CRM.API.getOrgVariable(TEMPLATE_CRMVAR)
 		if(!templateUrl.Success){
 			alert("テンプレートURLが設定されていません。")
