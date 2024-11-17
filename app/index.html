@@ -81,7 +81,7 @@
 		}
 	</style>
 
-	<div id="invoice" class="container" style="display:none;">
+	<div id="operation-ui" class="container" style="display:none;">
 		<div class="buttonArea">
 			<select name="invTemplateSelect" id="invTemplateSelect" class="form-select w-50"></select>
 			<button id="generateBtn" class="btn btn-primary ms-3">
@@ -119,12 +119,7 @@
 		<button id="closeBtn" class="btn btn-primary ms-3">閉じる</button>
 	</div>
 	<div id="loadCheck"></div>
-	<script>
-		let s = document.createElement("script")
-		let t = new Date()
-		s.src = "main.js?r=" + Date.now()
-		document.body.appendChild(s)
-	</script>
+	<script src="./loader.js"></script>
 </body>
 
 </html>
