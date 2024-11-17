@@ -14,11 +14,11 @@ async function loadJs(src) {
 
 async function loadAllScripts() {
     try {
-        await loadJs('common.js');
-        await loadJs('zohoapi.js');
-        await loadJs('varEngine.js');
-        await loadJs('generator.js');
-        await loadJs('main.js');
+        await loadJs('./js/common.js');
+        await loadJs('./js/zohoapi.js');
+        await loadJs('./js/varEngine.js');
+        await loadJs('./js/generator.js');
+        await loadJs('./js/main.js');
         console.log('All scripts loaded successfully');
     } catch (error) {
         console.error('Error loading scripts:', error);
