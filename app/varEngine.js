@@ -43,12 +43,27 @@ async function replaceSheetVariables(workbookId, sheetId, tempSheetId, moduleApi
 			for(idx in values){
 				// if(values[idx] == " "){ continue }
 				let colNum = colInfo.column_index
-				let rowNum = rowInfo.row_index*1 + idx*1
+				let rowNum = rowInfo.row_index
+				
+				// 複数レコードの場合、同じリピートキーを持つ行を探す
+				if(idx > 0){
+					// 現在の行の1列目の値（リピートキー）を取得
+					let currentRepeatKey = rowContents[0]
+					// 同じリピートキーを持つ次の行を探す
+					let nextRowWithSameKey = contents.find(r => 
+						r.row_index > rowNum && 
+						r.row_details[0].content === currentRepeatKey
+					)
+					if(nextRowWithSameKey){
+						rowNum = nextRowWithSameKey.row_index
+					}else{
+						continue // 同じリピートキーを持つ行がない場合はスキップ
+					}
+				}
+				
 				let targetRow = replaceContents.find( (row) => row.row_index == rowNum )
 				if(targetRow){
 					let targetCol = targetRow.row_details.find( (col) => col.column_index == colNum ).content = values[idx]
-					//targetCol.content = values[idx]
-					// debugger
 				}
 			}
 		}

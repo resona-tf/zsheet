@@ -1,3 +1,8 @@
+/*
+ * Version: 1.1.1
+ * Update: プログレスバーの制御機能を追加
+ */
+
 let ENTITY
 let ENTITY_IDS
 let FIELDS = []
@@ -22,25 +27,24 @@ let gather
 
 let widgetData
 
-let progress_steps = 100
-let current_steps = 0
-let perCellProgressStep, perSheetProgressStep, perRecordProgressStep	
+// プログレスバーの制御用変数
+let currentProgress = 0
+let totalRecords = 0
 
-let progressTotal = 100
-let progressSteps = 0
-let progressCurrent = 0
-function progressAddStep(step){
-	progressSteps = progressSteps + step
-	progressGetCurrent()
+function initProgress(total) {
+    currentProgress = 0
+    totalRecords = total
+    const progressBar = document.getElementById('progressBar')
+    progressBar.style.width = '0%'
+    progressBar.setAttribute('aria-valuenow', '0')
 }
-function progressNext(step){
-	progressCurrent++
-	progressGetCurrent()
-}
-function progressGetCurrent(){
-	let current = (progressTotal/progressSteps) * progressCurrent + "%"
-	document.getElementById("progressBar").style.width = current
-	console.log(current)
+
+function progressNext() {
+    currentProgress++
+    const percentage = (currentProgress / totalRecords) * 100
+    const progressBar = document.getElementById('progressBar')
+    progressBar.style.width = percentage + '%'
+    progressBar.setAttribute('aria-valuenow', percentage)
 }
 
 //###############　負荷テスト用コード　################
@@ -49,7 +53,7 @@ let debugRecordId = ""
 
 
 const PRDUCTION_ORGID = "90001619930"
-const TEMPLATE_CRMVAR = "Zs_Template"
+const TEMPLATE_CRMVAR = new URLSearchParams(window.location.search).get('varName')
 let ENVIROMENT = "production"
 let ApiDomain = "https://www.zohoapis.jp"
 let fileNameAddition = ""

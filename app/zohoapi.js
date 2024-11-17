@@ -308,7 +308,6 @@ ZS = {
 	},
 	copySheet: async function(wbid,origWsid,newWsName){
 		if(ZS.copySheetApiCount == 30){
-			debugger
 			apiCounter("workbook.copy")
 			//console.log(`workbook.copy -> ${wbid}.${origWsid}.${newWsName}`)
 			let result = await ZS.zsApi(
@@ -334,6 +333,8 @@ ZS = {
 				new_worksheet_name:newWsName
 			}
 		)
+		let newWs = result.worksheet_names.find( (ws) => ws.worksheet_name == result.new_worksheet_name )
+		ZS.sheetContents[wbid][newWs.worksheet_id] = ZS.sheetContents[wbid][origWsid]
 		ZS.copySheetApiCount++
 		return result
 	},

@@ -17,6 +17,10 @@
 
 <body>
 	<style>
+		/*
+		 * Version: 1.1.1
+		 * Update: ワークブックリンク表示エリアのスタイルを追加
+		 */
 		#generateBtn,
 		#generateGatherBtn,
 		#pay-generateBtn,
@@ -50,40 +54,61 @@
 			text-align: center;
 		}
 
-		.createOptions{
-			margin-right:24px;
+		.createOptions {
+			margin-right: 24px;
 			display: flex;
 			flex-direction: row;
 			justify-content: center;
 		}
-		.radioOption{
+		.radioOption {
 			
 		}
-		.form-check-inline{
+		.form-check-inline {
 			margin-right: 0;
 		}
-		.form-check-label{
+		.form-check-label {
 			margin-right: 24px;
 		}
-		.buttonArea{
+		.buttonArea {
 			width: 100%;
 			display: flex;
-		    align-items: center;
-    		justify-content: center;
+			align-items: center;
+			justify-content: center;
 		}
-		.progress{ margin: 8px;}
-		.closeBtnArea{
+		#invTemplateSelect {
+			flex: 1;
+			margin-right: 8px;
+		}
+		.progress { margin: 8px; }
+		.closeBtnArea {
 			width: 100%;
 			display: flex;
-		    align-items: center;
+			align-items: center;
 			justify-content: center;
 			margin-top: 16px;
+		}
+		#workbookLinks {
+			margin: 16px 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+		.workbook-link {
+			padding: 8px;
+			background: #f8f9fa;
+			border-radius: 4px;
+			text-decoration: none;
+			color: #0d6efd;
+		}
+		.workbook-link:hover {
+			background: #e9ecef;
+			color: #0a58ca;
 		}
 	</style>
 
 	<div id="operation-ui" class="container" style="display:none;">
 		<div class="buttonArea">
-			<select name="invTemplateSelect" id="invTemplateSelect" class="form-select w-50"></select>
+			<select name="invTemplateSelect" id="invTemplateSelect" class="form-select"></select>
 			<button id="generateBtn" class="btn btn-primary ms-3">
 				<div id="generateBtnText" class="">作成</div>
 				<div id="generateBtnInProgress" class="spinner-border spinner-border-sm text-light" width="0%"
@@ -115,6 +140,8 @@
 	<div id="progress" class="progress">
 		<div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 	</div>
+	<!-- ワークブックリンク表示エリア -->
+	<div id="workbookLinks"></div>
 	<div id="closeBtnArea" class="closeBtnArea" style="display:none;">
 		<button id="closeBtn" class="btn btn-primary ms-3">閉じる</button>
 	</div>

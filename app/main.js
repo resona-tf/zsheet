@@ -75,23 +75,43 @@ window.onload = async function(){
 	ZOHO.embeddedApp.init();
 	// loadHtml("https://air.southernwave.net/ZohoWidgetDevelopment/RecordToExcel/widget.html")
 
+	function addWorkbookLink(workbookName, workbookUrl) {
+		const linksContainer = document.getElementById('workbookLinks')
+		const link = document.createElement('a')
+		link.href = workbookUrl
+		link.target = '_blank'
+		link.className = 'workbook-link'
+		link.textContent = workbookName
+		linksContainer.appendChild(link)
 
+		// リンクが追加されるたびにUIのサイズを調整
+		const currentHeight = 200 + linksContainer.offsetHeight
+		ZOHO.CRM.UI.Resize({height: currentHeight.toString(), width:"540"})
+	}
+
+	function completeProgress() {
+		const progressBar = document.getElementById('progressBar')
+		// アニメーションクラスを削除
+		progressBar.classList.remove('progress-bar-animated')
+		progressBar.classList.remove('progress-bar-striped')
+		// プログレスバーを完了状態に
+		progressBar.style.width = '100%'
+		progressBar.setAttribute('aria-valuenow', '100')
+		
+		// 作成ボタンのスピナーを停止し、無効化状態を維持
+		const generateBtnInProgress = document.getElementById('generateBtnInProgress')
+		generateBtnInProgress.classList.remove('spinner-border')
+		generateBtnInProgress.classList.remove('spinner-border-sm')
+		generateBtnInProgress.innerHTML = '完了'
+	}
 
 	async function createZohoSheetDocuments(data){
-		debugger
-		progressAddStep(1)
-		progressAddStep(data.EntityId.length)
-
-		// labels = "<Z%日程->日程名%Z>"
-		// let rrr = replaceZohoFieldVariables(labels, "Bookings", "10796000013735411")
-		// return
+		// プログレスバーの初期化
+		initProgress(data.EntityId.length)
 
 		document.getElementById("generateBtnText").style.display = "none"
 		document.getElementById("generateBtnInProgress").style.display = "block"
 		document.getElementById("generateBtn").setAttribute("disabled", true)
-
-
-		progressNext()
 
 		//Sheetテンプレートから新規作成
 		// debugger
@@ -116,16 +136,16 @@ window.onload = async function(){
 			//debugger
 			await generateSheet(WORKING_BOOK_ID, ENTITY, [data.EntityId[idx]])
 			
-			// contents = await replaceSheetVariables(createdWorkbookId, worksheets[0].worksheet_id, "Gyara_Payment", record.id)
-			// await clearingRows(createdWorkbookId, worksheets[0].worksheet_id)
-			// progressNext()
-
-			// return workbookUrl
-			window.open(workbookUrl, "_blank")
+			// リンクを追加
+			addWorkbookLink(WorkbookName, workbookUrl)
 		}
 	
-		ZOHO.CRM.UI.Popup.close()
-
+		// 処理完了時の表示更新
+		completeProgress()
+		document.getElementById("closeBtnArea").style.display = "flex"
+		document.getElementById("closeBtn").addEventListener("click", function() {
+			ZOHO.CRM.UI.Popup.close()
+		})
 	}
 
 	async function getFieldInfo(module_apiName){
