@@ -12,100 +12,11 @@
 	<script src="https://cdn.jsdelivr.net/npm/xlsx-populate@1.21.0/browser/xlsx-populate.min.js"></script>
 	<script src="https://live.zwidgets.com/js-sdk/1.1/ZohoEmbededAppSDK.min.js"></script>
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+	<link href="css/style.css" rel="stylesheet" />
 	<title>請求書作成</title>
 </head>
 
 <body>
-	<style>
-		/*
-		 * Version: 1.1.1
-		 * Update: ワークブックリンク表示エリアのスタイルを追加
-		 */
-		#generateBtn,
-		#generateGatherBtn,
-		#pay-generateBtn,
-		#pay-generateGatherBtn,
-		#est-generateBtn,
-		#est-generateGatherBtn
-		{
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
-		#generateBtnText,
-		#generateGatherBtnText,
-		#pay-generateBtnText,
-		#pay-generateGatherBtnText,
-		#est-generateBtnText,
-		#est-generateGatherBtnText
-		{
-			display: block;
-		}
-
-		#generateBtnInProgress,
-		#generateGatherBtnInProgress,
-		#pay-generateBtnInProgress,
-		#pay-generateGatherBtnInProgress,
-		#est-generateBtnInProgress,
-		#est-generateGatherBtnInProgress
-		{
-			display: none;
-			text-align: center;
-		}
-
-		.createOptions {
-			margin-right: 24px;
-			display: flex;
-			flex-direction: row;
-			justify-content: center;
-		}
-		.radioOption {
-			
-		}
-		.form-check-inline {
-			margin-right: 0;
-		}
-		.form-check-label {
-			margin-right: 24px;
-		}
-		.buttonArea {
-			width: 100%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-		#invTemplateSelect {
-			flex: 1;
-			margin-right: 8px;
-		}
-		.progress { margin: 8px; }
-		.closeBtnArea {
-			width: 100%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			margin-top: 16px;
-		}
-		#workbookLinks {
-			margin: 16px 8px;
-			display: flex;
-			flex-direction: column;
-			gap: 8px;
-		}
-		.workbook-link {
-			padding: 8px;
-			background: #f8f9fa;
-			border-radius: 4px;
-			text-decoration: none;
-			color: #0d6efd;
-		}
-		.workbook-link:hover {
-			background: #e9ecef;
-			color: #0a58ca;
-		}
-	</style>
-
 	<div id="operation-ui" class="container" style="display:none;">
 		<div class="buttonArea">
 			<select name="invTemplateSelect" id="invTemplateSelect" class="form-select"></select>
@@ -116,25 +27,6 @@
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</button>
-		</div>
-		<div class="d-flex flex-row">
-			<!-- <div class="form-check createOptions">
-				<input class="form-check-input" type="checkbox" value="" id="gatheringCheck">
-				<label class="form-check-label" for="gatheringCheck">
-					合算請求
-				</label>
-			</div> -->
-			<!-- <div class="form-check createOptions input-group">
-				<form>
-					<input name="stamp" class="form-check-inline" type="checkbox" id="remindCheck">
-					<label class="form-check-label" for="remindCheck">督促/再請求</label>
-					<input name="stamp" class="form-check-inline" type="checkbox" id="refineCheck">
-					<label class="form-check-label" for="refineCheck">訂正版</label>
-				</form>
-			</div> -->
-		</div>
-		<div class="" id="remindReasonArea" style="display: none;">
-			<textarea class="form-control" id="remindReason" rows="2" placeholder="督促/再請求／訂正理由"></textarea>
 		</div>
 	</div>
 	<div id="progress" class="progress">
