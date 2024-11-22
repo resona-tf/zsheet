@@ -1,58 +1,45 @@
+
 window.onload = async function(){
 	ZOHO.embeddedApp.on("PageLoad", async function(data){
-		let orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo()
+		// debugger
+		WidgetKey = `${data.Entity}_${data.ButtonPosition}`
+		const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo()
 		const orgId = orgInfo.org[0].zgid
 		ApiDomain = orgId == PRDUCTION_ORGID ? "https://www.zohoapis.jp" : "https://crmsandbox.zoho.jp"
 
 		fileNameAddition = orgId == PRDUCTION_ORGID ? "" : "（テスト）"
 		widgetData = data
 
+		await loadWidgetSettings(WidgetKey)
+		TEMPLATE_CRMVAR = 
 		await waitFor("#loadCheck")
-
-		let templateUrl
 
 		// debugger
 		document.querySelector("#operation-ui").style.display = "block"
 
-		templateUrl = await ZOHO.CRM.API.getOrgVariable(TEMPLATE_CRMVAR)
-		if(!templateUrl.Success){
-			alert("テンプレートURLが設定されていません。")
-			ZOHO.CRM.UI.Popup.close()
-			return
-		}
-		templateSelectoerSetup(templateUrl.Success.Content, document.querySelector("#invTemplateSelect"))
-
+		templateSelectoerSetup(SETTINGS.SheetTemplateUrl, document.querySelector("#invTemplateSelect"))
 
 		function templateSelectoerSetup(v, elm){
-			// debugger
-			let variable = v
-			let zTemplateName
-			let templateOptionHtml = ""
-			if(variable.match(/\n/g)){
-				let templateUrlArray = variable.split("\n")
-				for(let url of templateUrlArray){
-					zTemplateName = url.split("#").shift()
-					zSheetTemplate = url.split("/").pop()
-					if(zSheetTemplate.match(/\?/g)){
-						zSheetTemplate = zSheetTemplate.split("?").shift()
-					}
-					
-					templateOptionHtml += `<option value="${zSheetTemplate}">${zTemplateName}</option>`
-				}
-				elm.innerHTML = templateOptionHtml
-			}else{
-				zTemplateName = variable.split("#").shift()
-				zSheetTemplate = variable.split("/").pop()
-				if(zSheetTemplate.match(/\?/g)){
-					zSheetTemplate = zSheetTemplate.split("?").shift()
-				}
-				templateOptionHtml += `<option value="${zSheetTemplate}" selected>${zTemplateName}</option>`
-				elm.innerHTML = templateOptionHtml
-				elm.disabled = true
+			let templateCheckboxHtml = ""
+			for(let entry of v){
+				const id = `template-${v.indexOf(entry)}`
+				templateCheckboxHtml += `
+					<div class="template-checkbox-item">
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" 
+								value="${entry.url}" 
+								data-index="${v.indexOf(entry)}"
+								id="${id}">
+							<label class="form-check-label" for="${id}">
+								${entry.name}
+							</label>
+						</div>
+					</div>`
 			}
+			elm.innerHTML = templateCheckboxHtml
 		}
 		
-		ZOHO.CRM.UI.Resize({height:"200", width:"540"})
+		ZOHO.CRM.UI.Resize({height:"300", width:"900"})
 
 		ENTITY = data.Entity
 		ENTITY_IDS = data.EntityId
@@ -69,14 +56,13 @@ window.onload = async function(){
 		}
 		
 		initOperationUI()
-
 	})
 
-	ZOHO.embeddedApp.init();
-	// loadHtml("https://air.southernwave.net/ZohoWidgetDevelopment/RecordToExcel/widget.html")
+	ZOHO.embeddedApp.init()
 
 	function addWorkbookLink(workbookName, workbookUrl) {
 		const linksContainer = document.getElementById('workbookLinks')
+		linksContainer.style.display = 'flex'
 		const link = document.createElement('a')
 		link.href = workbookUrl
 		link.target = '_blank'
@@ -85,8 +71,8 @@ window.onload = async function(){
 		linksContainer.appendChild(link)
 
 		// リンクが追加されるたびにUIのサイズを調整
-		const currentHeight = 200 + linksContainer.offsetHeight
-		ZOHO.CRM.UI.Resize({height: currentHeight.toString(), width:"540"})
+		const currentHeight = 300 + linksContainer.offsetHeight
+		ZOHO.CRM.UI.Resize({height: currentHeight.toString(),width:"900"})
 	}
 
 	function completeProgress() {
@@ -106,39 +92,157 @@ window.onload = async function(){
 	}
 
 	async function createZohoSheetDocuments(data){
-		// プログレスバーの初期化
-		initProgress(data.EntityId.length)
 
 		document.getElementById("generateBtnText").style.display = "none"
 		document.getElementById("generateBtnInProgress").style.display = "block"
 		document.getElementById("generateBtn").setAttribute("disabled", true)
 
-		//Sheetテンプレートから新規作成
-		// debugger
-		for(let idx in data.EntityId){
-			let recordData = await Z.getRecord(ENTITY, data.EntityId[idx])
-			if(IP == "61.200.96.103"){ fileNameAddition += "TEST" }
-			let WorkbookName = `${recordData.Name}_${recordData.Deals.name}`
+		let proceesOrder = []
 
-			let createBookRes = await createSheetFromTemplate(WorkbookName, zSheetTemplate)
-			createdWorkbookId = createBookRes.details.statusMessage.resource_id
-			workbookUrl = createBookRes.details.statusMessage.workbook_url
+		// 選択されたテンプレートの設定を取得
+		const templateContainer = document.getElementById("invTemplateSelect")
+		const selectedTemplates = Array.from(templateContainer.querySelectorAll('input[type="checkbox"]:checked'))
+			.map(checkbox => ({
+				index: checkbox.dataset.index,
+				url: checkbox.value
+			}))
 
-			WORKING_BOOK_ID = createdWorkbookId
-
-			//SheetをWorkDriveに移動
-			// if(IP != "61.200.96.103"){
-				// レプロ
-				// let mvRes = await moveFile(createdWorkbookId, directoryId)
-			// }
-			
-			let worksheets = await ZS.getWorksheetList(createdWorkbookId)
-			//debugger
-			await generateSheet(WORKING_BOOK_ID, ENTITY, [data.EntityId[idx]])
-			
-			// リンクを追加
-			addWorkbookLink(WorkbookName, workbookUrl)
+		if (selectedTemplates.length === 0) {
+			throw new Error('テンプレートが選択されていません')
 		}
+
+		// 処理内容を生成する
+		let recordData 
+		for (const template of selectedTemplates) {
+			let combinedDataSkip = false
+			let openDataSkip = false
+			for(let idx in data.EntityId){
+				recordData = await Z.getRecord(ENTITY, data.EntityId[idx])
+				const templateSettings = SETTINGS.SheetTemplateUrl[template.index]
+				if(templateSettings.attachToRecord){
+					proceesOrder.push({
+						type:"attach",
+						format: templateSettings.attachFormat,
+						recordIds: [data.EntityId[idx]],
+						templateUrl: template.url,
+						name:`${recordData.Name}_${recordData.Deals.name}`,
+						templateName: templateSettings.name,
+					})
+				}
+				if(templateSettings.download){
+					if(templateSettings.downloadFormat.includes("combined")){
+						if(!combinedDataSkip){
+							proceesOrder.push({
+								type:"download",
+								format: templateSettings.downloadFormat,
+								recordIds: data.EntityId,
+								templateUrl: template.url,
+								name:"",
+								templateName: templateSettings.name,
+							})
+							combinedDataSkip = true
+						}
+					}else{
+						proceesOrder.push({
+							type:"download",
+							format: templateSettings.downloadFormat,
+							recordIds: [data.EntityId[idx]],
+							templateUrl: template.url,
+							name:`${recordData.Name}_${recordData.Deals.name}`,
+							templateName: templateSettings.name,
+						})
+					}
+				}
+				if(templateSettings.open){
+					if(!openDataSkip){
+						proceesOrder.push({
+							type:"open",
+							format:"combined",
+							recordIds: data.EntityId,
+							templateUrl: template.url,
+							name:"",
+							templateName: templateSettings.name,
+						})
+						openDataSkip = true
+					}
+				}
+			}
+		}
+		proceesOrder.sort((a, b) => a.type.localeCompare(b.type))
+		// プログレスバーの初期化
+		initProgress(proceesOrder.length)
+debugger
+		for(let idx in proceesOrder){
+			let WorkbookName,createBookRes
+			if(proceesOrder[idx].format.includes("combined")){
+				WorkbookName = proceesOrder[idx].templateName
+				createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
+				WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
+				await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
+				proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
+			}else{
+				WorkbookName = proceesOrder[idx].name
+				createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
+				WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
+				await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
+				proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
+			}
+
+			if(proceesOrder[idx].type == "attach" || proceesOrder[idx].type == "download"){
+				let ext = proceesOrder[idx].format
+				if(ext.includes("combined")){ext = ext.replace("_combined","")}
+				let blob = await ZS.downloadAs(WORKING_BOOK_ID,ext)
+
+
+				if(proceesOrder[idx].type == "attach"){
+					await Z.attachFile(ENTITY, data.EntityId[idx], WorkbookName+"."+ext, blob)
+				}
+
+				if(proceesOrder[idx].type == "download"){
+					const url = window.URL.createObjectURL(blob);
+					const a = document.createElement("a");
+					a.href = url;
+					a.download = WorkbookName+"."+ext;
+					a.click();
+					window.URL.revokeObjectURL(url);
+				}
+			}
+			if(proceesOrder[idx].type == "open"){
+				addWorkbookLink(WorkbookName, proceesOrder[idx].sheetUrl)
+			}
+			progressNext()
+		}
+
+
+
+
+
+
+
+
+			// let recordData = await Z.getRecord(ENTITY, data.EntityId[idx])
+			// if(IP == "61.200.96.103"){ fileNameAddition += "TEST" }
+			
+
+			// let createBookRes = await createSheetFromTemplate(WorkbookName, zSheetTemplate)
+			// createdWorkbookId = createBookRes.details.statusMessage.resource_id
+			// workbookUrl = createBookRes.details.statusMessage.workbook_url
+
+			// WORKING_BOOK_ID = createdWorkbookId
+
+			// //SheetをWorkDriveに移動
+			// // if(IP != "61.200.96.103"){
+			// 	// レプロ
+			// 	// let mvRes = await moveFile(createdWorkbookId, directoryId)
+			// // }
+			
+			// let worksheets = await ZS.getWorksheetList(createdWorkbookId)
+			// //debugger
+			// await generateSheet(WORKING_BOOK_ID, ENTITY, [data.EntityId[idx]])
+			
+			// // リンクを追加
+			// addWorkbookLink(WorkbookName, workbookUrl)
+		// }
 	
 		// 処理完了時の表示更新
 		completeProgress()
@@ -156,6 +260,7 @@ window.onload = async function(){
 			return FIELDS[module_apiName]
 		}
 	}
+
 	async function getRelatedListInfo(module_apiName){
 		if(typeof RELATED_LISTS[module_apiName] === "undefined"){
 			RELATED_LISTS[module_apiName] = (await ZOHO.CRM.META.getRelatedList({Entity:module_apiName})).related_lists
@@ -164,7 +269,6 @@ window.onload = async function(){
 			return RELATED_LISTS[module_apiName]
 		}
 	}
-
 
 	function waitFor(selector) {
 		return new Promise(function (res, rej) {
@@ -182,13 +286,10 @@ window.onload = async function(){
 		});
 	}
 
-
 	function initOperationUI(){
 		let genBtn = document.getElementById("generateBtn")
 		genBtn.addEventListener("click", function(){
-			zSheetTemplate = document.getElementById("invTemplateSelect").value
 			createZohoSheetDocuments(widgetData)
 		})
 	}
-
 }

@@ -8,8 +8,7 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
 
 	let sheetInfos = []
 
-	let worksheets = await ZS.getWorksheetList(WORKING_BOOK_ID)
-	worksheets = await ZS.getWorksheetList(WORKING_BOOK_ID, true)
+	let worksheets = await ZS.getWorksheetList(WORKING_BOOK_ID, true)
 
 	zSingleTemplateSheetId = worksheets[0].worksheet_id
 	zSingleTemplateContents = await ZS.getSheetContents(WORKING_BOOK_ID, zSingleTemplateSheetId, true)
@@ -45,15 +44,12 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
 		ZS.sheetContents[WORKING_BOOK_ID][currentWsId] = sheetContents
 		worksheetContents.push({sheetId: currentWsId, contents:contents})
 		
-		debugger
-		console.log(JSON.stringify(originalContents.slice(80)))
-		console.log(JSON.stringify(replacedContents.slice(80)))
+		// debugger
+		// console.log(JSON.stringify(originalContents.slice(80)))
+		// console.log(JSON.stringify(replacedContents.slice(80)))
 
 		// 置換前後の内容を比較して行を削除
 		await clearingRows(WORKING_BOOK_ID, currentWsId, originalContents)
-		
-		// 各レコードの処理完了時にプログレスバーを更新
-		progressNext()
 	}
 	
 	//雛形シートを削除

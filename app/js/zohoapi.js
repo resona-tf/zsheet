@@ -133,6 +133,11 @@ Z = {
 		let modules = res.modules
 		Z.modules = modules
 		return modules
+	},
+	attachFile: async function(entity, id, fileName, fileBlob){
+		apiCounter("ZOHO.CRM.API.attachFile")
+		let res = await ZOHO.CRM.API.attachFile({Entity:entity, RecordID:id, File:{Name:fileName, Content:fileBlob}})
+		return result
 	}
 }
 
@@ -350,6 +355,35 @@ ZS = {
 			}
 		)
 		return result
+	},
+	downloadAs: async function(wbid,format){
+		let mergedPdf = await PDFLib.PDFDocument.create()
+		let pdf = await ZOHO.CRM.CONNECTION.invoke("zohooauth",{
+			"url": `https://sheet.zoho.jp/api/v2/download/${wbid}?method=workbook.download`,
+			"method" : "POST",
+			"param_type" : 1,
+			"parameters" :{
+				// method:"workbook.download",
+				format:format,
+				page_settings:{
+					print_type:"WORKBOOK",
+					scale:3,
+					add_gridlines:false,
+					add_button:false,
+					add_image:true,
+					align_vcenter:false,
+					align_hcenter:true,
+					margin_left:0,
+					margin_right:0,
+					margin_top:0.25,
+					margin_bottom:0.25,
+				}
+			},
+			"RESPONSE_TYPE":"stream"
+		})
+		let pdfU8Array = await pdf.arrayBuffer()
+		let blob = new Blob([pdfU8Array], { type: `application/${format}` });
+		return blob
 	}
 }
 
@@ -362,7 +396,26 @@ function apiCounter(api){
 	console.log(`## API ## ${api} : ${API_COUNT[api]}`)
 }
 
-async function createSheetFromTemplate(workbookName, templateId){
+async function createSheetFromTemplate(workbookName, templateUrl){
+	// Initialize an empty `templateId`
+	let templateId = '';
+
+	// Check if the `templateUrl` contains a '/'
+	if (templateUrl.includes('/')) {
+		// Extract the part after the last '/' using `split` and `pop`
+		let parts = templateUrl.split('/');
+		let lastPart = parts.pop();
+
+		// Now, check if the extracted part contains a '?'
+		if (lastPart.includes('?')) {
+			// Extract the part before the '?' using `split` again
+			templateId = lastPart.split('?')[0];
+		} else {
+			// If there is no '?', use the entire last part
+			templateId = lastPart;
+		}
+	}
+
 	let res = await ZOHO.CRM.CONNECTION.invoke("zohooauth",{
 		"url": "https://sheet.zoho.jp/api/v2/createfromtemplate",
 		"method" : "POST",
