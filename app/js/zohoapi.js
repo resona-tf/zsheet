@@ -136,7 +136,12 @@ Z = {
 	},
 	attachFile: async function(entity, id, fileName, fileBlob){
 		apiCounter("ZOHO.CRM.API.attachFile")
-		let res = await ZOHO.CRM.API.attachFile({Entity:entity, RecordID:id, File:{Name:fileName, Content:fileBlob}})
+		try {
+			let res = await ZOHO.CRM.API.attachFile({Entity:entity, RecordID:id, File:{Name:fileName, Content:fileBlob}})
+		} catch (error) {
+			console.log(error)
+			// alert(JSON.stringify(error))
+		}
 		return result
 	}
 }
@@ -203,25 +208,9 @@ ZS = {
 		if(ZS.sheetContents[wbid]?.[wsid] && force != true){ return ZS.sheetContents[wbid][wsid] }
 		if(!ZS.sheetContents[wbid]){ ZS.sheetContents[wbid] = {} }
 		if(!ZS.sheetContents[wbid][wsid]){ ZS.sheetContents[wbid][wsid] = {} }
-		// //使用範囲を取得
-		// console.log(`worksheet.usedarea -> ${wbid}.${wsid}`)
-		// let result = await ZS.zsApi(
-		// 	`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
-		// 	{
-		// 		method:"worksheet.usedarea",
-		// 		worksheet_id:wsid
-		// 	}
-		// )
-		// maxCol = result.used_column_index
-		// maxRow = result.used_row_index
-
-		//プログレスバーの設定
-		// progressAddTask( maxRow * maxCol )
-		// perCellProgressStep = perSheetProgressStep / ( maxRow * maxCol )
-
 
 		//使用範囲のコンテンツを取得
-		apiCounter("worksheet.content.get")
+		await apiCounter("worksheet.content.get")
 		//console.log(`worksheet.content.get -> ${wbid}.${wsid}`)
 		result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -269,7 +258,7 @@ ZS = {
 	getWorksheetList: async function(wbid, force=false){
 		if(ZS.sheetNames[wbid] && force != true){ return ZS.sheetNames[wbid] }
 		if(!ZS.sheetNames[wbid]){ ZS.sheetNames[wbid] = {} }
-		apiCounter("worksheet.list")
+		await apiCounter("worksheet.list")
 		// console.log(`worksheet.list -> ${wbid}`)
 		let res = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -281,7 +270,7 @@ ZS = {
 		return worksheets
 	},
 	deleteRows: async function(wbid,wsid,rows){
-		apiCounter("worksheet.rows.delete")
+		await apiCounter("worksheet.rows.delete")
 		//console.log(`worksheet.rows.delete -> ${wbid}.${wsid}`)
 		let result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -294,7 +283,7 @@ ZS = {
 		return result
 	},
 	updateSheetViaCsv: async function(wbid,wsid,csv){
-		apiCounter("worksheet.csvdata.set")
+		await apiCounter("worksheet.csvdata.set")
 		//console.log(`worksheet.csvdata.set -> ${wbid}.${wsid}`)
 		let result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -312,23 +301,7 @@ ZS = {
 		return result
 	},
 	copySheet: async function(wbid,origWsid,newWsName){
-		if(ZS.copySheetApiCount == 30){
-			apiCounter("workbook.copy")
-			//console.log(`workbook.copy -> ${wbid}.${origWsid}.${newWsName}`)
-			let result = await ZS.zsApi(
-				`https://sheet.zoho.jp/api/v2/copy`,"POST",1,
-				{
-					method:"workbook.copy",
-					resource_id:wbid,
-				}
-			)
-			WORKING_BOOK_ID = result.resource_id
-			ZS.sheetContents[WORKING_BOOK_ID] = ZS.sheetContents[wbid]
-			wbid = WORKING_BOOK_ID
-			ZS.copySheetApiCount = 0
-			await deleteFile(wbid)
-		}
-		apiCounter("worksheet.copy")
+		await apiCounter("worksheet.copy")
 		// console.log(`worksheet.copy -> ${wbid}.${origWsid}.${newWsName}`)
 		let result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -345,7 +318,7 @@ ZS = {
 	},
 	deleteSheet: async function(wbid,wsid){
 		ZS.sheetContents[wbid][wsid] = null
-		apiCounter("worksheet.delete")
+		await apiCounter("worksheet.delete")
 		// console.log(`worksheet.delete -> ${wbid}.${wsid}`)
 		let result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
@@ -357,6 +330,7 @@ ZS = {
 		return result
 	},
 	downloadAs: async function(wbid,format){
+		await apiCounter("workbook.download")
 		let mergedPdf = await PDFLib.PDFDocument.create()
 		let pdf = await ZOHO.CRM.CONNECTION.invoke("zohooauth",{
 			"url": `https://sheet.zoho.jp/api/v2/download/${wbid}?method=workbook.download`,
@@ -387,13 +361,91 @@ ZS = {
 	}
 }
 
-function apiCounter(api){
+async function apiCounter2(api){
+	apiLimits = [
+		{api:"worksheet.content.get",callsPerMinuts:120},
+		{api:"worksheet.list",callsPerMinuts:60},
+		{api:"worksheet.rows.delete",callsPerMinuts:20},
+		{api:"worksheet.csvdata.set",callsPerMinuts:20},
+		{api:"worksheet.copy",callsPerMinuts:30},
+		{api:"worksheet.delete",callsPerMinuts:20},
+		{api:"workbook.download",callsPerMinuts:30},
+	]
 	if(API_COUNT[api]){
 		API_COUNT[api]++
 	}else{
 		API_COUNT[api] = 1
 	}
 	console.log(`## API ## ${api} : ${API_COUNT[api]}`)
+}
+
+async function apiCounter3(api) {
+    const apiLimits = [
+        { api: "worksheet.content.get", callsPerMinute: 120 },
+        { api: "worksheet.list", callsPerMinute: 60 },
+        { api: "worksheet.rows.delete", callsPerMinute: 20 },
+        { api: "worksheet.csvdata.set", callsPerMinute: 20 },
+        { api: "worksheet.copy", callsPerMinute: 30 },
+        { api: "worksheet.delete", callsPerMinute: 20 },
+        { api: "workbook.download", callsPerMinute: 30 },
+    ];
+
+    const limit = apiLimits.find(limit => limit.api === api);
+    if (!limit) {
+        console.warn(`No rate limit found for API: ${api}`);
+        return;
+    }
+    
+    const callsPerMillisecond = limit.callsPerMinute / 60000;
+
+    if (!API_COUNT[api]) {
+        API_COUNT[api] = 0;
+    }
+
+    const currentTimestamp = Date.now();
+
+    const lastCallTimestamp = LAST_API_CALL[api] || 0;
+    const elapsedTime = currentTimestamp - lastCallTimestamp;
+    const allowableCalls = Math.floor(elapsedTime * callsPerMillisecond);
+
+    if (API_COUNT[api] < allowableCalls) {
+        API_COUNT[api]++;
+    } else {
+        const waitTime = Math.ceil((API_COUNT[api] - allowableCalls) / callsPerMillisecond);
+        console.log(`Waiting ${waitTime}ms for API: ${api} to avoid rate limit`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        API_COUNT[api] = allowableCalls + 1; // Resetting to current allowable count
+    }
+
+    LAST_API_CALL[api] = Date.now();
+    console.log(`## API ## ${api} : ${API_COUNT[api]}`);
+}
+async function apiCounter(api) {
+    const now = Date.now();
+    const limit = apiLimits[api];
+
+    if (!limit) {
+        console.warn(`No rate limit found for API: ${api}`);
+        return;
+    }
+
+    if (!apiUsageLogs[api]) {
+        apiUsageLogs[api] = [];
+    }
+
+    // 直近60秒以内の呼び出し記録を保持し、古い記録を削除
+    apiUsageLogs[api] = apiUsageLogs[api].filter(timestamp => now - timestamp < 60000);
+
+    if (apiUsageLogs[api].length >= limit) {
+        const oldestCallTimestamp = apiUsageLogs[api][0];
+        const waitTime = 60000 - (now - oldestCallTimestamp);
+        console.log(`Waiting ${waitTime}ms for API: ${api} to avoid rate limit`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        return apiCounter(api); // 再帰的に呼び出すことで再度チェック
+    }
+
+    apiUsageLogs[api].push(now);
+    console.log(`${api} : ${apiUsageLogs[api].length}/${limit}`);
 }
 
 async function createSheetFromTemplate(workbookName, templateUrl){

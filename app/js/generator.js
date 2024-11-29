@@ -1,59 +1,67 @@
 async function generateSheet(workbookid, moduleApiName, recordId = [], forceGather = false){
-	let maxCol, maxRow
-	let currentWsName, currentWsId
-	let contents
+    let maxCol, maxRow;
+    let currentWsName, currentWsId;
+    let contents;
 
-	let gatherBaseSheetId
-	let gatherBaseRecordId
+    let gatherBaseSheetId;
+    let gatherBaseRecordId;
 
-	let sheetInfos = []
+    let sheetInfos = [];
 
-	let worksheets = await ZS.getWorksheetList(WORKING_BOOK_ID, true)
+    let worksheets = await ZS.getWorksheetList(WORKING_BOOK_ID, true);
 
-	zSingleTemplateSheetId = worksheets[0].worksheet_id
-	zSingleTemplateContents = await ZS.getSheetContents(WORKING_BOOK_ID, zSingleTemplateSheetId, true)
+    zSingleTemplateSheetId = worksheets[0].worksheet_id;
+    zSingleTemplateContents = await ZS.getSheetContents(WORKING_BOOK_ID, zSingleTemplateSheetId, true);
 
-	for( rId of recordId ){
-		let result
-		let record = await Z.getRecord(moduleApiName, rId)
-		let newSheetName
+    const delayInterval = 2000; // 60 * 1000 / 30 = 2000 ms
+    for (let i = 0; i < recordId.length; i++) {
+        let rId = recordId[i];
+        let result;
+        let record = await Z.getRecord(moduleApiName, rId);
+        let newSheetName;
 
-		newSheetName = `${record.Name}-${record.Deals.name}`
+        newSheetName = `${record.Name}-${record.Deals.name}`;
 
-		//テンプレートにするシートの選択
-		let templateSheetId
+        // Template selection
+        let templateSheetId;
 
-		templateSheetId = zSingleTemplateSheetId
-		zCurrentTemplateContents = zSingleTemplateContents
+        templateSheetId = zSingleTemplateSheetId;
+        zCurrentTemplateContents = zSingleTemplateContents;
 
-		//ワークシートをコピー
-		result = await ZS.copySheet(WORKING_BOOK_ID, templateSheetId, newSheetName)
-		currentWsName = newSheetName
-		currentWsId = result.worksheet_names.find( (ws) => ws.worksheet_name == currentWsName ).worksheet_id
-		sheetInfos.push({sheetId: currentWsId, sheetName: currentWsName, recordId: rId})
+        // Copy worksheet
+        result = await ZS.copySheet(WORKING_BOOK_ID, templateSheetId, newSheetName);
+        currentWsName = newSheetName;
+        currentWsId = result.worksheet_names.find(ws => ws.worksheet_name == currentWsName).worksheet_id;
+        sheetInfos.push({ sheetId: currentWsId, sheetName: currentWsName, recordId: rId });
 
-		if(!ZS.sheetContents[WORKING_BOOK_ID]){ZS.sheetContents[WORKING_BOOK_ID] = {}}
-		if(!ZS.sheetContents[WORKING_BOOK_ID][currentWsId]){ZS.sheetContents[WORKING_BOOK_ID][currentWsId] = {}}
+        if (!ZS.sheetContents[WORKING_BOOK_ID]) { ZS.sheetContents[WORKING_BOOK_ID] = {}; }
+        if (!ZS.sheetContents[WORKING_BOOK_ID][currentWsId]) { ZS.sheetContents[WORKING_BOOK_ID][currentWsId] = {}; }
 
-		// 置換前のテンプレート内容を保存
-		let originalContents = await ZS.getSheetContents(WORKING_BOOK_ID, currentWsId)
-		
-		let replacedContents = await replaceSheetVariables(WORKING_BOOK_ID, currentWsId, templateSheetId, moduleApiName, rId)
+        // Save original template content
+        let originalContents = await ZS.getSheetContents(WORKING_BOOK_ID, currentWsId);
 
-		let sheetContents = replacedContentsToSheetContents(replacedContents)
-		ZS.sheetContents[WORKING_BOOK_ID][currentWsId] = sheetContents
-		worksheetContents.push({sheetId: currentWsId, contents:contents})
-		
-		// debugger
-		// console.log(JSON.stringify(originalContents.slice(80)))
-		// console.log(JSON.stringify(replacedContents.slice(80)))
+        let replacedContents = await replaceSheetVariables(WORKING_BOOK_ID, currentWsId, templateSheetId, moduleApiName, rId);
 
-		// 置換前後の内容を比較して行を削除
-		await clearingRows(WORKING_BOOK_ID, currentWsId, originalContents)
+        let sheetContents = replacedContentsToSheetContents(replacedContents);
+        ZS.sheetContents[WORKING_BOOK_ID][currentWsId] = sheetContents;
+        worksheetContents.push({ sheetId: currentWsId, contents: contents });
+
+        // Compare and clear rows
+        await clearingRows(WORKING_BOOK_ID, currentWsId, originalContents);
+
+        // Introduce delay if more than 30 records
+        if (recordId.length > 30 && (i + 1) % 30 === 0) {
+            await delay(delayInterval);
+        }
+    }
+    
+    // Delete template sheet
+    await ZS.deleteSheet(WORKING_BOOK_ID, zSingleTemplateSheetId);
+
+
+	async function delay(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
-	
-	//雛形シートを削除
-	await ZS.deleteSheet(WORKING_BOOK_ID, zSingleTemplateSheetId)
 }
 
 async function gatheringSheets(workbookid, baseSheetId, gatherSheetIds = []){

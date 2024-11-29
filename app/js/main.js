@@ -6,7 +6,7 @@ window.onload = async function(){
 		const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo()
 		const orgId = orgInfo.org[0].zgid
 		ApiDomain = orgId == PRDUCTION_ORGID ? "https://www.zohoapis.jp" : "https://crmsandbox.zoho.jp"
-
+		ENVIROMENT = orgId == PRDUCTION_ORGID ? "production" : "sandbox"
 		fileNameAddition = orgId == PRDUCTION_ORGID ? "" : "（テスト）"
 		widgetData = data
 
@@ -171,22 +171,21 @@ window.onload = async function(){
 		proceesOrder.sort((a, b) => a.type.localeCompare(b.type))
 		// プログレスバーの初期化
 		initProgress(proceesOrder.length)
-debugger
+		debugger
 		for(let idx in proceesOrder){
+			progressNext()
+
 			let WorkbookName,createBookRes
 			if(proceesOrder[idx].format.includes("combined")){
 				WorkbookName = proceesOrder[idx].templateName
-				createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
-				WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
-				await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
-				proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
 			}else{
 				WorkbookName = proceesOrder[idx].name
-				createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
-				WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
-				await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
-				proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
 			}
+			
+			createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
+			WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
+			await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
+			proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
 
 			if(proceesOrder[idx].type == "attach" || proceesOrder[idx].type == "download"){
 				let ext = proceesOrder[idx].format
@@ -195,7 +194,8 @@ debugger
 
 
 				if(proceesOrder[idx].type == "attach"){
-					await Z.attachFile(ENTITY, data.EntityId[idx], WorkbookName+"."+ext, blob)
+					// debugger
+					await Z.attachFile(ENTITY, proceesOrder[idx].recordIds[0], WorkbookName+"."+ext, blob)
 				}
 
 				if(proceesOrder[idx].type == "download"){
@@ -210,7 +210,6 @@ debugger
 			if(proceesOrder[idx].type == "open"){
 				addWorkbookLink(WorkbookName, proceesOrder[idx].sheetUrl)
 			}
-			progressNext()
 		}
 
 
@@ -288,8 +287,13 @@ debugger
 
 	function initOperationUI(){
 		let genBtn = document.getElementById("generateBtn")
-		genBtn.addEventListener("click", function(){
-			createZohoSheetDocuments(widgetData)
+		genBtn.addEventListener("click", async function(){
+			try{
+				await createZohoSheetDocuments(widgetData)
+			} catch (error) {
+				console.log(error)
+				alert(JSON.stringify(error))
+			}
 		})
 	}
 }

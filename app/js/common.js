@@ -350,6 +350,17 @@ let WORKING_BOOK_ID
 
 let GatherSalesNumbers = ""
 
-let API_COUNT = {}
+const API_COUNT = {}
+const LAST_API_CALL = {};
+const apiUsageLogs = {};
+const apiLimits = {
+    "worksheet.content.get": 120,
+    "worksheet.list": 60,
+    "worksheet.rows.delete": 20,
+    "worksheet.csvdata.set": 20,
+    "worksheet.copy": 30,
+    "worksheet.delete": 20,
+    "workbook.download": 30,
+};
 
 let IP
