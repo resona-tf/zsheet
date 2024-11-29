@@ -361,65 +361,6 @@ ZS = {
 	}
 }
 
-async function apiCounter2(api){
-	apiLimits = [
-		{api:"worksheet.content.get",callsPerMinuts:120},
-		{api:"worksheet.list",callsPerMinuts:60},
-		{api:"worksheet.rows.delete",callsPerMinuts:20},
-		{api:"worksheet.csvdata.set",callsPerMinuts:20},
-		{api:"worksheet.copy",callsPerMinuts:30},
-		{api:"worksheet.delete",callsPerMinuts:20},
-		{api:"workbook.download",callsPerMinuts:30},
-	]
-	if(API_COUNT[api]){
-		API_COUNT[api]++
-	}else{
-		API_COUNT[api] = 1
-	}
-	console.log(`## API ## ${api} : ${API_COUNT[api]}`)
-}
-
-async function apiCounter3(api) {
-    const apiLimits = [
-        { api: "worksheet.content.get", callsPerMinute: 120 },
-        { api: "worksheet.list", callsPerMinute: 60 },
-        { api: "worksheet.rows.delete", callsPerMinute: 20 },
-        { api: "worksheet.csvdata.set", callsPerMinute: 20 },
-        { api: "worksheet.copy", callsPerMinute: 30 },
-        { api: "worksheet.delete", callsPerMinute: 20 },
-        { api: "workbook.download", callsPerMinute: 30 },
-    ];
-
-    const limit = apiLimits.find(limit => limit.api === api);
-    if (!limit) {
-        console.warn(`No rate limit found for API: ${api}`);
-        return;
-    }
-    
-    const callsPerMillisecond = limit.callsPerMinute / 60000;
-
-    if (!API_COUNT[api]) {
-        API_COUNT[api] = 0;
-    }
-
-    const currentTimestamp = Date.now();
-
-    const lastCallTimestamp = LAST_API_CALL[api] || 0;
-    const elapsedTime = currentTimestamp - lastCallTimestamp;
-    const allowableCalls = Math.floor(elapsedTime * callsPerMillisecond);
-
-    if (API_COUNT[api] < allowableCalls) {
-        API_COUNT[api]++;
-    } else {
-        const waitTime = Math.ceil((API_COUNT[api] - allowableCalls) / callsPerMillisecond);
-        console.log(`Waiting ${waitTime}ms for API: ${api} to avoid rate limit`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        API_COUNT[api] = allowableCalls + 1; // Resetting to current allowable count
-    }
-
-    LAST_API_CALL[api] = Date.now();
-    console.log(`## API ## ${api} : ${API_COUNT[api]}`);
-}
 async function apiCounter(api) {
     const now = Date.now();
     const limit = apiLimits[api];
