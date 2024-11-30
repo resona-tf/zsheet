@@ -20,7 +20,7 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
         let record = await Z.getRecord(moduleApiName, rId);
         let newSheetName;
 
-        newSheetName = `${record.Name}-${record.Deals.name}`;
+        newSheetName = `${record.Name}`;
 
         // Template selection
         let templateSheetId;
