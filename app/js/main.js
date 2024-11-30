@@ -125,7 +125,7 @@ window.onload = async function(){
 						format: templateSettings.attachFormat,
 						recordIds: [data.EntityId[idx]],
 						templateUrl: template.url,
-						name:`${recordData.Name}_${recordData.Deals.name}`,
+						name:`${templateSettings.name}_${recordData.Name}`,
 						templateName: templateSettings.name,
 					})
 				}
@@ -137,7 +137,7 @@ window.onload = async function(){
 								format: templateSettings.downloadFormat,
 								recordIds: data.EntityId,
 								templateUrl: template.url,
-								name:"",
+								name:`${templateSettings.name}_${moment().format("YYYYMMDD-HHmmss")}`,
 								templateName: templateSettings.name,
 							})
 							combinedDataSkip = true
@@ -148,7 +148,7 @@ window.onload = async function(){
 							format: templateSettings.downloadFormat,
 							recordIds: [data.EntityId[idx]],
 							templateUrl: template.url,
-							name:`${recordData.Name}_${recordData.Deals.name}`,
+							name:`${templateSettings.name}_${recordData.Name}`,
 							templateName: templateSettings.name,
 						})
 					}
@@ -160,7 +160,7 @@ window.onload = async function(){
 							format:"combined",
 							recordIds: data.EntityId,
 							templateUrl: template.url,
-							name:"",
+							name:`${templateSettings.name}_${moment().format("YYYYMMDD-HHmmss")}`,
 							templateName: templateSettings.name,
 						})
 						openDataSkip = true
@@ -213,36 +213,6 @@ window.onload = async function(){
 		}
 
 
-
-
-
-
-
-
-			// let recordData = await Z.getRecord(ENTITY, data.EntityId[idx])
-			// if(IP == "61.200.96.103"){ fileNameAddition += "TEST" }
-			
-
-			// let createBookRes = await createSheetFromTemplate(WorkbookName, zSheetTemplate)
-			// createdWorkbookId = createBookRes.details.statusMessage.resource_id
-			// workbookUrl = createBookRes.details.statusMessage.workbook_url
-
-			// WORKING_BOOK_ID = createdWorkbookId
-
-			// //SheetをWorkDriveに移動
-			// // if(IP != "61.200.96.103"){
-			// 	// レプロ
-			// 	// let mvRes = await moveFile(createdWorkbookId, directoryId)
-			// // }
-			
-			// let worksheets = await ZS.getWorksheetList(createdWorkbookId)
-			// //debugger
-			// await generateSheet(WORKING_BOOK_ID, ENTITY, [data.EntityId[idx]])
-			
-			// // リンクを追加
-			// addWorkbookLink(WorkbookName, workbookUrl)
-		// }
-	
 		// 処理完了時の表示更新
 		completeProgress()
 		document.getElementById("closeBtnArea").style.display = "flex"
