@@ -1,4 +1,3 @@
-
 window.onload = async function(){
 	ZOHO.embeddedApp.on("PageLoad", async function(data){
 		// debugger
@@ -37,6 +36,16 @@ window.onload = async function(){
 					</div>`
 			}
 			elm.innerHTML = templateCheckboxHtml
+
+			// v1.0.0: チェックボックスの変更イベントを監視
+			elm.addEventListener('change', function() {
+				const hasChecked = Array.from(elm.querySelectorAll('input[type="checkbox"]'))
+					.some(checkbox => checkbox.checked);
+				document.getElementById("generateBtn").disabled = !hasChecked;
+			});
+
+			// 初期状態でボタンを無効化
+			document.getElementById("generateBtn").disabled = true;
 		}
 		
 		ZOHO.CRM.UI.Resize({height:"300", width:"900"})
