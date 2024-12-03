@@ -40,10 +40,10 @@ async function replaceSheetVariables(workbookId, sheetId, tempSheetId, moduleApi
 			if(values.length == 0){ values = [" "] }
 			
 			// 置換後の値を対応するセルに設定
+			let colNum = colInfo.column_index
+			let rowNum = rowInfo.row_index
 			for(idx in values){
 				// if(values[idx] == " "){ continue }
-				let colNum = colInfo.column_index
-				let rowNum = rowInfo.row_index
 				
 				// 複数レコードの場合、同じリピートキーを持つ行を探す
 				if(idx > 0){
