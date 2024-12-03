@@ -421,3 +421,12 @@ async function createSheetFromTemplate(workbookName, templateUrl){
 	})
 	return res
 }
+
+async function getRelatedListInfo(module_apiName){
+	if(typeof RELATED_LISTS[module_apiName] === "undefined"){
+		RELATED_LISTS[module_apiName] = (await ZOHO.CRM.META.getRelatedList({Entity:module_apiName})).related_lists
+		return RELATED_LISTS[module_apiName]
+	}else{
+		return RELATED_LISTS[module_apiName]
+	}
+}
