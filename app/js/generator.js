@@ -263,8 +263,10 @@ async function clearingRows(workbookId, sheetId, originalContents) {
 
     // 3. 削除の実行
     if (deleteRanges.length > 0) {
-        const result = await ZS.deleteRows(workbookId, sheetId, deleteRanges)
-        console.log('Delete Result:', result)
+        for (let range of deleteRanges) {
+            const result = await ZS.deleteRows(workbookId, sheetId, range)
+            console.log('Delete Range:', range)
+        }
     }
 }
 
