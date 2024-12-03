@@ -164,6 +164,7 @@ async function gatheringSheets(workbookid, baseSheetId, gatherSheetIds = []){
  * @param {Array} originalContents - 置換前のシートコンテンツ
  */
 async function clearingRows(workbookId, sheetId, originalContents) {
+    debugger
     // 現在のシートの内容を取得
     let currentContents = await ZS.getSheetContents(workbookId, sheetId)
     
