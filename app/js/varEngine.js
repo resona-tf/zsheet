@@ -75,7 +75,7 @@ async function replaceSheetVariables(workbookId, sheetId, tempSheetId, moduleApi
 	// debugger
 
 	// CSVデータで対象シートを更新
-	ZS.updateSheetViaCsv(workbookId, sheetId, csvData)
+	await ZS.updateSheetViaCsv(workbookId, sheetId, csvData)
 	return replaceContents
 	// return await ZS.getSheetContents(workbookId, sheetId)
 }
