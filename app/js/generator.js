@@ -64,99 +64,6 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
 	}
 }
 
-async function gatheringSheets(workbookid, baseSheetId, gatherSheetIds = []){
-	let salesNos = []
-	for(let r of gatherSheetIds){
-		let record = await Z.getRecord("Deals", r.recordId)
-		salesNos.push(record.Sales_No)
-	}
-	let gatherSheetName = salesNos.join(",")
-	if(gatherSheetName.length > 31){
-		gatherSheetName = gatherSheetName.substring(0,29) + "…"
-	}
-	//ワークシートをコピー
-	let result = await ZS.copySheet( workbookid, baseSheetId, gatherSheetName )
-
-	let currentWsName = result.new_worksheet_name
-	let currentWsId = result.worksheet_names.find( (ws) => ws.worksheet_name == currentWsName ).worksheet_id
-
-	let gatherSheetContents = await ZS.getSheetContents(workbookid, currentWsId)
-
-	//合算シートのコンテンツを１列目以外を空にする
-	for(let row of gatherSheetContents){
-		for(let col of row.row_details){
-			if(col.column_index == 1){ continue }
-			col.content = ""
-		}
-	}
-
-	//生成済みのシートのコンテンツを取得
-	let gatheredRow = []
-	for(let sheetIdInfo of gatherSheetIds){
-		let sheetId = sheetIdInfo.sheetId
-		if(sheetId == zSingleTemplateSheetId){ continue }
-		if(sheetId == zMultiTemplateSheetId){ continue }
-		if(sheetId == currentWsId ){ continue }
-
-		let wsContents = ZS.sheetContents[workbookid][sheetId]
-
-		//各シートの行をループ
-		for(let contentsRowIdx in wsContents){
-			//１列目が空ならスキップ
-			if(wsContents[contentsRowIdx].row_details[0].content == ""){ continue }
-
-			//空でなければ、繰り返しキーを取得
-			let key = wsContents[contentsRowIdx].row_details[0].content
-
-			//行のコンテンツが空ならスキップ
-			let isEmptyRow = true
-			for(let isEmptyCol of wsContents[contentsRowIdx].row_details){
-				let c = isEmptyCol.content
-				if(
-					c != "" &&
-					c != key &&
-					c != "☆" &&
-					c != "※" &&
-					c != '" "&CHAR(10)&" "' &&
-					!c.match(/[ ]+/)
-				){
-					isEmptyRow = false
-					break
-				}
-			}
-			if(isEmptyRow){ continue }
-
-			//合算シートを行ごとにループ
-			for(let gatherRow of gatherSheetContents){
-				//繰り返しキーが合致したら
-				if(gatherRow.row_details[0].content == key){
-					//転記済みの行ならスキップ
-					if(gatheredRow.find( r => r == gatherRow.row_index)){ continue }
-					//合算シートに行をコピー
-					gatherRow.row_details = wsContents[contentsRowIdx].row_details
-					//行番号を転記済みとして記録
-					gatheredRow.push(gatherRow.row_index)
-					break
-				}
-			}
-		}
-
-		await ZS.deleteSheet(workbookid, sheetId)
-	}
-
-	//特例措置：請求Noは決め打ちで記入
-	// gatherSheetContents.find( row => row.row_index == 2 ).row_details[12].content = "No. " + gatherSheetName.replace(/,/g, "/")
-	// console.log(gatherSheetContents)
-	//contentsからcsvデータを生成。ダブルクオーテーションと改行コードをエスケープする
-	let csvData = gatherSheetContents.map( (row) => row.row_details.map( (col) => `"${col.content.replace(/"/g, '""').replace(/\n/g, '\r')}"` ).join(",") ).join("\n")
-
-	//csvデータでシートを更新
-	await ZS.updateSheetViaCsv(workbookid, currentWsId, csvData)
-	zCurrentTemplateContents = zMultiTemplateContents
-	ZS.sheetContents[workbookid][currentWsId] = replacedContentsToSheetContents(gatherSheetContents)
-	return gatherSheetContents
-}
-
 /**
  * シート内の不要な行を削除する関数 v4.3
  * @param {string} workbookId - 対象のワークブックID
@@ -164,7 +71,6 @@ async function gatheringSheets(workbookid, baseSheetId, gatherSheetIds = []){
  * @param {Array} originalContents - 置換前のシートコンテンツ
  */
 async function clearingRows(workbookId, sheetId, originalContents) {
-    debugger
     // 現在のシートの内容を取得
     let currentContents = await ZS.getSheetContents(workbookId, sheetId)
     
