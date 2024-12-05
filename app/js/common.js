@@ -223,7 +223,7 @@ async function loadWidgetSettings(key){
 		await saveWidgetSettings(key)
 		return
 	}else{
-		SETTINGS = JSON.parse(settingData.value)
+		SETTINGS = JSON.parse(settingData)
         if (!SETTINGS.SheetTemplateUrl) {
             SETTINGS.SheetTemplateUrl = [{name:'', url:''}];
         }
@@ -271,53 +271,38 @@ async function getOrgVariable(key){
 		"method" : "GET",
 	})
 	let variables = result.details.statusMessage.variables.find((v) => v.name == key)
-	return variables
+
+
+    let widgetSettingsData = await ZOHO.CRM.API.searchRecord({Entity:"Widget_Settings",Type:"criteria",Query:`(Name:equals:${key})`})
+    if(!widgetSettingsData?.data){
+        SETTINGS = JSON.parse(variables.value)
+        return null
+    }else{
+        return widgetSettingsData?.data[0].Json
+    }
 }
 
 async function createOrgVariables(key){
-	let result = await ZOHO.CRM.CONNECTION.invoke("zohooauth", {
-		"url":`${ApiDomain}/crm/v7/settings/variables`,
-		"method" : "POST",
-		"param_type" : 2,
-		"headers" : {
-			"Content-Type" : "application/json"
-		},
-		"parameters" : {
-			"variables":[
-				{
-					"variable_group":{
-						"name":"General"
-					},
-					"name":key,
-					"api_name":key,
-					"value":JSON.stringify(SETTINGS),
-					"type":"textarea"
-				}
-			]
-		}
-	})
-	return result
+    let result = await ZOHO.CRM.API.insertRecord({
+        Entity:"Widget_Settings",
+        APIData:{
+            Name:key,
+            Json:JSON.stringify(SETTINGS)
+        }
+    })
 }
 
 async function updateOrgVariavbles(key,val){
-	let variable = await getOrgVariable(key)
-	let result = await ZOHO.CRM.CONNECTION.invoke("zohooauth", {
-		"url":`${ApiDomain}/crm/v7/settings/variables`,
-		"method" : "PUT",
-		"param_type" : 2,
-		"headers" : {
-			"Content-Type" : "application/json"
-		},
-		"parameters" : {
-			"variables":[
-				{
-					"id":variable.id,
-					"value":JSON.stringify(SETTINGS),
-				}
-			]
-		}
-	})
-	return result
+    debugger
+    let widgetSettingsData = await ZOHO.CRM.API.searchRecord({Entity:"Widget_Settings",Type:"criteria",Query:`(Name:equals:${key})`})
+    let result = await ZOHO.CRM.API.updateRecord({
+        Entity:"Widget_Settings",
+        APIData:{
+            id:widgetSettingsData.data[0].id,
+            Name:key,
+            Json:JSON.stringify(SETTINGS)
+        }
+    })
 }
 
 // プログレスバーの制御用変数
