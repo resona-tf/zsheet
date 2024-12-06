@@ -171,6 +171,7 @@ ZS = {
 						}
 						if(result.details.statusMessage.error_code == 2866){
 							resolve( result.details.statusMessage )
+							return
 						}
 
 						debugger
