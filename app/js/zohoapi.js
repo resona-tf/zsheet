@@ -164,12 +164,12 @@ ZS = {
 					console.log(result)
 					if(!result.details || result.details.statusMessage.error_code){
 						// debugger
-						if(result.details.statusMessage.error_code == "2950"){
+						if(result.details.statusMessage.error_code == 2950){
 							alert("APIの呼び出し回数が上限に達しました。処理件数を減らして再度実行してください。")
 							ZOHO.CRM.UI.Popup.close()
 							return
 						}
-						if(result.details.statusMessage.error_code == "2866"){
+						if(result.details.statusMessage.error_code == 2866){
 							resolve( result.details.statusMessage )
 						}
 
