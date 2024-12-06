@@ -168,27 +168,15 @@ ZS = {
 							alert("APIの呼び出し回数が上限に達しました。処理件数を減らして再度実行してください。")
 							ZOHO.CRM.UI.Popup.close()
 							return
-						}else{
-							debugger
-							alert("エラーが発生しました。再度実行してください。")
-							ZOHO.CRM.UI.Popup.close()
+						}
+						if(result.details.statusMessage.error_code == "2866"){
 							return
 						}
-						// console.log(`## Api Result -> ${JSON.stringify(result)} ##`)
-						// console.log(`## Wait -> ${JSON.stringify(parameters)} ##`)
-						// if(!ZS.timer.onmessage){
-						// 	let counter = 0
-						// 	ZS.timer.onmessage = async function(e) {
-						// 		console.log(`## Waiting... ${counter*10}sec`)
-						// 		if(counter > 31){
-						// 			console.log(`## Retry -> ${JSON.stringify(parameters)} ##`)
-						// 			let r = await ZS.zsApi(url, method, param_type, parameters)
-						// 			resolve(r)
-						// 		}
-						// 		counter++
-						// 	}
-						// }
-						// ZS.timer.postMessage(10000);
+
+						debugger
+						alert("エラーが発生しました。再度実行してください。")
+						ZOHO.CRM.UI.Popup.close()
+						return
 					}else{
 						resolve( result.details.statusMessage )
 					}
