@@ -38,8 +38,7 @@
 	</div>
 
 	<div id="operation-ui" class="container">
-		<div class="buttonArea">
-			<div id="invTemplateSelect" class="template-checkbox-list"></div>
+		<div class="button-progress">
 			<button id="generateBtn" class="btn btn-primary ms-3">
 				<div id="generateBtnText" class="">作成</div>
 				<div id="generateBtnInProgress" class="spinner-border spinner-border-sm text-light" width="0%"
@@ -47,17 +46,27 @@
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</button>
+			<div id="progress" class="progress">
+				<div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+			</div>
 		</div>
-		<div id="progress" class="progress">
-			<div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+		<div id="workbookLinks" style="display:none;">
+			<div>印刷用</div>
+		</div>
+		<div id="closeBtnArea" class="closeBtnArea" style="display:none;">
+			<button id="closeBtn" class="btn btn-primary ms-3">閉じる</button>
+		</div>
+		<div id="invTemplateSelect" class="template-checkbox-list"></div>
+		<div class="buttonArea">
+			
 		</div>
 		<div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
 	</div>
 
 	<div id="settingsPanel" style="display:none;">
 		<div id="settingsHeader">
-			<span id="settingsCloseBtn" class="material-icons">close</span>
-			<div>帳票出力設定</div>
+			<div class="setteing-button" id="settingsCloseBtn" ><span class="material-icons">cancel</span>キャンセル</div>
+			<div class="setteing-button" id="settingsSaveBtn" ><span class="material-icons">save</span>保存</div>
 		</div>
 		<div id="templateSettings">
 			<div class="template-list"></div>
@@ -67,12 +76,7 @@
 		</div>
 	</div>
 
-	<div id="workbookLinks" style="display:none;">
-		<div>印刷用</div>
-	</div>
-	<div id="closeBtnArea" class="closeBtnArea" style="display:none;">
-		<button id="closeBtn" class="btn btn-primary ms-3">閉じる</button>
-	</div>
+
 	<div id="loadCheck"></div>
 	<script>
 		async function loadJs(src, type="js") {

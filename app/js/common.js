@@ -1,6 +1,6 @@
 /*
- * Version: 1.3.8
- * Update: 設定パネルの開閉制御を修正
+ * Version: 1.3.11
+ * Update: テンプレートアイテムの並び替えアニメーションを追加
  */
 
 let ENTITY
@@ -24,8 +24,8 @@ let zCurrentTemplateContents
 let worksheetContents = []
 
 let SETTINGS = {
-	"productionOrgId": '',
-	"SheetTemplateUrl": [
+    "productionOrgId": '',
+    "SheetTemplateUrl": [
         {
             "name":'',
             "url":'',
@@ -37,31 +37,54 @@ let SETTINGS = {
     ]
 }
 
+// 設定の一時保存用
+let TEMP_SETTINGS = JSON.parse(JSON.stringify(SETTINGS))
+
 let gather
 let widgetData
 let WidgetKey
+
+let WidgetHeight
+let WidgetWidth = 900
 
 // 設定UIの初期化と制御
 function initializeSettingsUI() {
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
     const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+    const settingsSaveBtn = document.getElementById('settingsSaveBtn');
     const operationUI = document.getElementById('operation-ui');
     const progress = document.getElementById('progress');
     
     const templateList = document.querySelector('.template-list');
     const templateAdd = document.querySelector('.template-add');
 
-    // 表示領域を固定サイズに設定
-    ZOHO.CRM.UI.Resize({
-        height: "400",
-        width: "700"
-    });
+    // アイテムの並び替えアニメーション
+    async function moveItems(currentIndex, targetIndex) {
+        const currentItem = document.getElementById(`template-item-${currentIndex}`);
+        const targetItem = document.getElementById(`template-item-${targetIndex}`);
+        
+        // 移動方向に基づいてクラスを追加
+        const isMovingUp = targetIndex < currentIndex;
+        currentItem.classList.add(isMovingUp ? 'moving-up' : 'moving-down');
+        targetItem.classList.add(isMovingUp ? 'moving-down' : 'moving-up');
+        
+        // アニメーション完了を待つ
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // データの更新
+        const temp = TEMP_SETTINGS.SheetTemplateUrl[currentIndex];
+        TEMP_SETTINGS.SheetTemplateUrl[currentIndex] = TEMP_SETTINGS.SheetTemplateUrl[targetIndex];
+        TEMP_SETTINGS.SheetTemplateUrl[targetIndex] = temp;
+        
+        // リストを再描画
+        renderTemplateList();
+    }
 
     // テンプレート一覧の生成
     function renderTemplateList() {
         templateList.innerHTML = '';
-        SETTINGS.SheetTemplateUrl.forEach((template, index) => {
+        TEMP_SETTINGS.SheetTemplateUrl.forEach((template, index) => {
             const item = document.createElement('div');
             item.className = 'template-item';
             item.id = `template-item-${index}`;
@@ -105,6 +128,14 @@ function initializeSettingsUI() {
                         </div>
                     </div>
                 </div>
+                <div class="template-sort-buttons">
+                    <div class="template-sort-button template-sort-up" data-index="${index}">
+                        <span class="material-icons">keyboard_arrow_up</span>
+                    </div>
+                    <div class="template-sort-button template-sort-down" data-index="${index}">
+                        <span class="material-icons">keyboard_arrow_down</span>
+                    </div>
+                </div>
             </div>
             <span class="material-icons template-remove" data-index="${index}">remove_circle_outline</span>
             `;
@@ -115,8 +146,7 @@ function initializeSettingsUI() {
                 input.addEventListener('change', (e) => {
                     const index = parseInt(e.target.dataset.index);
                     const field = e.target.dataset.field;
-                    SETTINGS.SheetTemplateUrl[index][field] = e.target.value;
-                    saveWidgetSettings(WidgetKey);
+                    TEMP_SETTINGS.SheetTemplateUrl[index][field] = e.target.value;
                 });
             });
 
@@ -129,42 +159,37 @@ function initializeSettingsUI() {
 
             // データに添付の制御
             attachToRecord.addEventListener('change', (e) => {
-                SETTINGS.SheetTemplateUrl[index].attachToRecord = e.target.checked;
+                TEMP_SETTINGS.SheetTemplateUrl[index].attachToRecord = e.target.checked;
                 attachFormat.style.display = e.target.checked ? 'block' : 'none';
-                saveWidgetSettings(WidgetKey);
             });
 
             // 添付形式の制御
             attachFormat.addEventListener('change', (e) => {
-                SETTINGS.SheetTemplateUrl[index].attachFormat = e.target.value;
-                saveWidgetSettings(WidgetKey);
+                TEMP_SETTINGS.SheetTemplateUrl[index].attachFormat = e.target.value;
             });
 
             // ダウンロードの制御
             download.addEventListener('change', (e) => {
-                SETTINGS.SheetTemplateUrl[index].download = e.target.checked;
+                TEMP_SETTINGS.SheetTemplateUrl[index].download = e.target.checked;
                 downloadFormat.style.display = e.target.checked ? 'block' : 'none';
-                saveWidgetSettings(WidgetKey);
             });
 
             // ダウンロード形式の制御
             downloadFormat.addEventListener('change', (e) => {
-                SETTINGS.SheetTemplateUrl[index].downloadFormat = e.target.value;
-                saveWidgetSettings(WidgetKey);
+                TEMP_SETTINGS.SheetTemplateUrl[index].downloadFormat = e.target.value;
             });
 
             // オープンの制御
             openSheet.addEventListener('change', (e) => {
-                SETTINGS.SheetTemplateUrl[index].open = e.target.checked;
-                saveWidgetSettings(WidgetKey);
+                TEMP_SETTINGS.SheetTemplateUrl[index].open = e.target.checked;
             });
 
             // 削除ボタンの処理
             item.querySelector('.template-remove').addEventListener('click', (e) => {
                 const index = parseInt(e.target.dataset.index);
-                SETTINGS.SheetTemplateUrl.splice(index, 1);
-                if (SETTINGS.SheetTemplateUrl.length === 0) {
-                    SETTINGS.SheetTemplateUrl.push({
+                TEMP_SETTINGS.SheetTemplateUrl.splice(index, 1);
+                if (TEMP_SETTINGS.SheetTemplateUrl.length === 0) {
+                    TEMP_SETTINGS.SheetTemplateUrl.push({
                         "name":'',
                         "url":'',
                         "attachToRecord": false,
@@ -173,15 +198,29 @@ function initializeSettingsUI() {
                         "downloadFormat": 'pdf',
                     });
                 }
-                saveWidgetSettings(WidgetKey);
                 renderTemplateList();
+            });
+
+            // 並び替えボタンの処理
+            item.querySelector('.template-sort-up').addEventListener('click', async (e) => {
+                const index = parseInt(e.target.closest('.template-sort-up').dataset.index);
+                if (index > 0) {
+                    await moveItems(index, index - 1);
+                }
+            });
+
+            item.querySelector('.template-sort-down').addEventListener('click', async (e) => {
+                const index = parseInt(e.target.closest('.template-sort-down').dataset.index);
+                if (index < TEMP_SETTINGS.SheetTemplateUrl.length - 1) {
+                    await moveItems(index, index + 1);
+                }
             });
         });
     }
 
     // テンプレート追加ボタンの処理
     templateAdd.addEventListener('click', () => {
-        SETTINGS.SheetTemplateUrl.push({
+        TEMP_SETTINGS.SheetTemplateUrl.push({
             "name":'',
             "url":'',
             "attachToRecord": false,
@@ -190,15 +229,18 @@ function initializeSettingsUI() {
             "downloadFormat": 'pdf',
             "open": false,
         });
-        saveWidgetSettings(WidgetKey);
         renderTemplateList();
     });
 
     // 設定パネルを開く
     function openSettingsPanel() {
+        ZOHO.CRM.UI.Resize({height: "700", width: WidgetWidth.toString()})
+        // 一時保存用の設定をコピー
+        TEMP_SETTINGS = JSON.parse(JSON.stringify(SETTINGS));
         settingsPanel.style.display = 'block';
         operationUI.style.display = 'none';
         settingsBtn.style.display = 'none';
+        renderTemplateList();
     }
 
     // 設定パネルを閉じる
@@ -206,24 +248,31 @@ function initializeSettingsUI() {
         settingsPanel.style.display = 'none';
         operationUI.style.display = 'flex';
         settingsBtn.style.display = 'flex';
+        ZOHO.CRM.UI.Resize({height: WidgetHeight.toString(), width: WidgetWidth.toString()})
+    }
+
+    // 設定を保存
+    async function saveSettings() {
+        SETTINGS = JSON.parse(JSON.stringify(TEMP_SETTINGS));
+        await saveWidgetSettings(WidgetKey);
+        closeSettingsPanel();
     }
 
     // 設定パネルの開閉制御
     settingsBtn.addEventListener('click', openSettingsPanel);
     settingsCloseBtn.addEventListener('click', closeSettingsPanel);
-
-    renderTemplateList();
+    settingsSaveBtn.addEventListener('click', saveSettings);
 }
 
 async function loadWidgetSettings(key){
-	let settingData = await getOrgVariable(`widget_${key}`)
-	if(!settingData){
-		const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo()
-		SETTINGS.productionOrgId = orgInfo.org[0].zgid
-		await saveWidgetSettings(key)
-		return
-	}else{
-		SETTINGS = JSON.parse(settingData)
+    let settingData = await getOrgVariable(`widget_${key}`)
+    if(!settingData){
+        const orgInfo = await ZOHO.CRM.CONFIG.getOrgInfo()
+        SETTINGS.productionOrgId = orgInfo.org[0].zgid
+        await saveWidgetSettings(key)
+        return
+    }else{
+        SETTINGS = JSON.parse(settingData)
         if (!SETTINGS.SheetTemplateUrl) {
             SETTINGS.SheetTemplateUrl = [{name:'', url:''}];
         }
@@ -252,25 +301,27 @@ async function loadWidgetSettings(key){
                 template.attachFormat = 'zohosheet';
             }
         });
+        // 一時保存用の設定を初期化
+        TEMP_SETTINGS = JSON.parse(JSON.stringify(SETTINGS));
         initializeSettingsUI();
-	}
+    }
 }
 
 async function saveWidgetSettings(key){
-	let settingData = await getOrgVariable(`widget_${key}`)
-	if(!settingData){
-		await createOrgVariables(`widget_${key}`)
-		settingData = await getOrgVariable(`widget_${key}`)
-	}
-	await updateOrgVariavbles(`widget_${key}`, SETTINGS)
+    let settingData = await getOrgVariable(`widget_${key}`)
+    if(!settingData){
+        await createOrgVariables(`widget_${key}`)
+        settingData = await getOrgVariable(`widget_${key}`)
+    }
+    await updateOrgVariavbles(`widget_${key}`, SETTINGS)
 }
 
 async function getOrgVariable(key){
-	let result = await ZOHO.CRM.CONNECTION.invoke("zohooauth", {
-		"url":`${ApiDomain}/crm/v7/settings/variables`,
-		"method" : "GET",
-	})
-	let variables = result.details.statusMessage.variables.find((v) => v.name == key)
+    let result = await ZOHO.CRM.CONNECTION.invoke("zohooauth", {
+        "url":`${ApiDomain}/crm/v7/settings/variables`,
+        "method" : "GET",
+    })
+    let variables = result.details.statusMessage.variables.find((v) => v.name == key)
 
 
     let widgetSettingsData = await ZOHO.CRM.API.searchRecord({Entity:"Widget_Settings",Type:"criteria",Query:`(Name:equals:${key})`})
@@ -310,19 +361,19 @@ let currentProgress = 0
 let totalRecords = 0
 
 function initProgress(total) {
-	currentProgress = 0
-	totalRecords = total
-	const progressBar = document.getElementById('progressBar')
-	progressBar.style.width = '0%'
-	progressBar.setAttribute('aria-valuenow', '0')
+    currentProgress = 0
+    totalRecords = total
+    const progressBar = document.getElementById('progressBar')
+    progressBar.style.width = '0%'
+    progressBar.setAttribute('aria-valuenow', '0')
 }
 
 function progressNext() {
-	currentProgress++
-	const percentage = (currentProgress / totalRecords) * 100
-	const progressBar = document.getElementById('progressBar')
-	progressBar.style.width = percentage + '%'
-	progressBar.setAttribute('aria-valuenow', percentage)
+    currentProgress++
+    const percentage = (currentProgress / totalRecords) * 100
+    const progressBar = document.getElementById('progressBar')
+    progressBar.style.width = percentage + '%'
+    progressBar.setAttribute('aria-valuenow', percentage)
 }
 
 const PRDUCTION_ORGID = "90001619930"

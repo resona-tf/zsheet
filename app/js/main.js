@@ -36,6 +36,9 @@ window.onload = async function(){
 					</div>`
 			}
 			elm.innerHTML = templateCheckboxHtml
+			WidgetHeight = 60 + elm.offsetTop + elm.offsetHeight
+
+			ZOHO.CRM.UI.Resize({height: WidgetHeight.toString(), width: WidgetWidth.toString()})
 
 			// v1.0.0: チェックボックスの変更イベントを監視
 			elm.addEventListener('change', function() {
@@ -47,8 +50,7 @@ window.onload = async function(){
 			// 初期状態でボタンを無効化
 			document.getElementById("generateBtn").disabled = true;
 		}
-		
-		ZOHO.CRM.UI.Resize({height:"300", width:"900"})
+
 
 		ENTITY = data.Entity
 		ENTITY_IDS = data.EntityId
@@ -80,8 +82,9 @@ window.onload = async function(){
 		linksContainer.appendChild(link)
 
 		// リンクが追加されるたびにUIのサイズを調整
-		const currentHeight = 300 + linksContainer.offsetHeight
-		ZOHO.CRM.UI.Resize({height: currentHeight.toString(),width:"900"})
+		// debugger
+		WidgetHeight = 24 + linksContainer.offsetTop + linksContainer.offsetHeight
+		ZOHO.CRM.UI.Resize({height: WidgetHeight.toString(),width: WidgetWidth.toString()})
 	}
 
 	function completeProgress() {
@@ -98,6 +101,7 @@ window.onload = async function(){
 		generateBtnInProgress.classList.remove('spinner-border')
 		generateBtnInProgress.classList.remove('spinner-border-sm')
 		generateBtnInProgress.innerHTML = '完了'
+		document.querySelector('.button-progress').style.display = 'none'
 	}
 
 	async function createZohoSheetDocuments(data){
