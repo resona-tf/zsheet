@@ -65,7 +65,7 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
 }
 
 /**
- * シート内の不要な行を削除する関数 v4.3
+ * シート内の不要な行を削除する関数 v4.6
  * @param {string} workbookId - 対象のワークブックID
  * @param {string} sheetId - 対象のシートID
  * @param {Array} originalContents - 置換前のシートコンテンツ
@@ -93,48 +93,54 @@ async function clearingRows(workbookId, sheetId, originalContents) {
     }
 
     /**
-     * 行がリピートキーを持っているかを判定する関数
-     * @param {Object} row - 行オブジェクト
-     * @returns {boolean} - リピートキーを持っているかどうか
+     * リピートキーから末尾の数字を抽出する関数
+     * @param {string} key - リピートキー
+     * @returns {number} - 末尾の数字（数字がない場合は0）
      */
-    const hasRepeatKey = (row) => {
+    const extractNumberFromKey = (key) => {
+        const match = key.match(/(\d+)$/)
+        return match ? parseInt(match[1]) : 0
+    }
+
+    // 1. 各リピートキーの出現回数をカウント
+    const keyCount = {}
+    currentContents.forEach(row => {
         const firstCol = row.row_details[0]
-        return isValidContent(firstCol.content)
-    }
+        if (isValidContent(firstCol.content)) {
+            keyCount[firstCol.content] = (keyCount[firstCol.content] || 0) + 1
+        }
+    })
 
-    /**
-     * 行のコンテンツが変更されているかを判定する関数
-     * @param {Object} currentRow - 現在の行
-     * @param {Object} originalRow - 元の行
-     * @returns {boolean} - コンテンツが変更されているかどうか
-     */
-    const hasContentChanged = (currentRow, originalRow) => {
-        return currentRow.row_details.some((col, index) => {
-            if (index === 0) return false // キー列は除外
-            const currentContent = col.content
-            const originalContent = originalRow.row_details[index].content
-            return currentContent !== originalContent
-        })
-    }
-
-    // 1. 各行を個別に判定
+    // 2. 各行を個別に判定
     const rowsToDelete = []
     for (let rowIndex = 0; rowIndex < currentContents.length; rowIndex++) {
         const currentRow = currentContents[rowIndex]
         const originalRow = originalContents[rowIndex]
+        const firstCol = currentRow.row_details[0]
 
         // リピートキーがない行はスキップ（削除対象外）
-        if (!hasRepeatKey(currentRow)) {
+        if (!isValidContent(firstCol.content)) {
             continue
         }
 
-        // リピートキーがあり、コンテンツが変更されていない行は削除対象
-        if (!hasContentChanged(currentRow, originalRow)) {
-            rowsToDelete.push(rowIndex)
+        const minKeepRows = extractNumberFromKey(firstCol.content)
+        const totalRows = keyCount[firstCol.content]
+
+        // リピートキーがあり、コンテンツが変更されていない行は削除候補
+        if (!currentRow.row_details.some((col, index) => {
+            if (index === 0) return false // キー列は除外
+            return col.content !== originalRow.row_details[index].content
+        })) {
+            // 末尾の数字で指定された数以上の行が残っている場合のみ削除対象に追加
+            if (minKeepRows === 0 || totalRows > minKeepRows) {
+                rowsToDelete.push(rowIndex)
+                // カウントを減らす
+                keyCount[firstCol.content]--
+            }
         }
     }
 
-    // 2. 連続する行をまとめる
+    // 3. 連続する行をまとめる
     const deleteRanges = []
     if (rowsToDelete.length > 0) {
         // 降順にソート
@@ -168,7 +174,7 @@ async function clearingRows(workbookId, sheetId, originalContents) {
     console.log('RowsToDelete:', rowsToDelete)
     console.log('DeleteRanges:', deleteRanges)
 
-    // 3. 削除の実行
+    // 4. 削除の実行
     if (deleteRanges.length > 0) {
         for (let range of deleteRanges) {
             const result = await ZS.deleteRows(workbookId, sheetId, [range])
