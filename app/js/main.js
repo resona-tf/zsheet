@@ -180,7 +180,7 @@ window.onload = async function(){
 		proceesOrder.sort((a, b) => a.type.localeCompare(b.type))
 		// プログレスバーの初期化
 		initProgress(proceesOrder.length)
-		debugger
+		// debugger
 		for(let idx in proceesOrder){
 			progressNext()
 
