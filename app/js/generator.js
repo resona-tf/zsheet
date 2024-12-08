@@ -65,7 +65,7 @@ async function generateSheet(workbookid, moduleApiName, recordId = [], forceGath
 }
 
 /**
- * シート内の不要な行を削除する関数 v4.6
+ * シート内の不要な行を削除する関数 v4.7
  * @param {string} workbookId - 対象のワークブックID
  * @param {string} sheetId - 対象のシートID
  * @param {Array} originalContents - 置換前のシートコンテンツ
@@ -113,6 +113,7 @@ async function clearingRows(workbookId, sheetId, originalContents) {
 
     // 2. 各行を個別に判定
     const rowsToDelete = []
+    let activeRows = {}
     for (let rowIndex = 0; rowIndex < currentContents.length; rowIndex++) {
         const currentRow = currentContents[rowIndex]
         const originalRow = originalContents[rowIndex]
@@ -127,16 +128,21 @@ async function clearingRows(workbookId, sheetId, originalContents) {
         const totalRows = keyCount[firstCol.content]
 
         // リピートキーがあり、コンテンツが変更されていない行は削除候補
+        let isDeleteRow = false
         if (!currentRow.row_details.some((col, index) => {
             if (index === 0) return false // キー列は除外
             return col.content !== originalRow.row_details[index].content
         })) {
-            // 末尾の数字で指定された数以上の行が残っている場合のみ削除対象に追加
-            if (minKeepRows === 0 || totalRows > minKeepRows) {
+            // 指定された数（minKeepRows）以上の行があり、かつ削除後も指定された数以上の行が残る場合のみ削除
+            if (minKeepRows <= activeRows[firstCol.content]) {
                 rowsToDelete.push(rowIndex)
                 // カウントを減らす
                 keyCount[firstCol.content]--
+                isDeleteRow = true
             }
+        }
+        if (!isDeleteRow) {
+            activeRows[firstCol.content] = activeRows.hasOwnProperty(firstCol.content) ? activeRows[firstCol.content] + 1 : 1
         }
     }
 
