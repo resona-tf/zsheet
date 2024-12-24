@@ -185,6 +185,9 @@ window.onload = async function(){
 		// プログレスバーの初期化
 		initProgress(proceesOrder.length)
 		// debugger
+
+		let currentUser = await ZOHO.CRM.CONFIG.getCurrentUser()
+
 		for(let idx in proceesOrder){
 			progressNext()
 
@@ -197,6 +200,7 @@ window.onload = async function(){
 			
 			createBookRes = await createSheetFromTemplate(WorkbookName, proceesOrder[idx].templateUrl)
 			WORKING_BOOK_ID = createBookRes.details.statusMessage.resource_id
+			await ZS.shareWorkbook(WORKING_BOOK_ID, [{"user_email":currentUser.users[0].email,"access_level":"share"}])
 			await generateSheet(WORKING_BOOK_ID, ENTITY, proceesOrder[idx].recordIds)
 			proceesOrder[idx].sheetUrl = createBookRes.details.statusMessage.workbook_url
 

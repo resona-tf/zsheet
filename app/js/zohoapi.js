@@ -347,6 +347,19 @@ ZS = {
 		let pdfU8Array = await pdf.arrayBuffer()
 		let blob = new Blob([pdfU8Array], { type: `application/${format}` });
 		return blob
+	},
+	shareWorkbook: async function(wbid, share_json){
+		await apiCounter("workbook.share")
+		debugger
+		let result = await ZS.zsApi(
+			`https://sheet.zoho.jp/api/v2/share`,"POST",1,
+			{
+				method:"workbook.share",
+				resource_id:wbid,
+				share_json:share_json
+			}
+		)
+		return result
 	}
 }
 

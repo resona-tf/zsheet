@@ -397,6 +397,7 @@ const apiLimits = {
     "worksheet.copy": 30,
     "worksheet.delete": 20,
     "workbook.download": 30,
+    "workbook.share": 20,
 };
 
 let IP
