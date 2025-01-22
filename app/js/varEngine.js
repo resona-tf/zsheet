@@ -274,7 +274,7 @@ async function _getDataFromZVarString(ZVarLabels, tabApiName, record){
 			let results = []
 			for(let subformRecord of record[ZvarSubformInfo.api_name]){
 				let replaceContent = await _getDataFromZVarString(ZVarLabels.slice(1), ZvarSubformInfo.api_name, subformRecord)
-				if(replaceContent == " "){ continue }
+				// if(replaceContent == " "){ continue }
 				results = results.concat( replaceContent )
 			}
 			return results
