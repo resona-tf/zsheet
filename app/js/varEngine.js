@@ -308,7 +308,7 @@ async function _getDataFromZVarString(ZVarLabels, tabApiName, record){
 			if(fieldData == null){ return [" "]}
 			if(ZvarFieldInfo.data_type == "datetime"){ return [moment(fieldData).format("YYYY/MM/DD HH:mm:ss")] }
 			if(ZvarFieldInfo.data_type == "date"){ return [moment(fieldData).format("YYYY/MM/DD")] }
-			return [fieldData]	
+			return [fieldData.replaceAll("\n","\r\n")]
 		}else{
 			return false
 		}
