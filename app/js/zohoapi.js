@@ -271,23 +271,61 @@ ZS = {
 		)
 		return result
 	},
-	updateSheetViaCsv: async function(wbid,wsid,csv){
-		await apiCounter("worksheet.csvdata.set")
-		//console.log(`worksheet.csvdata.set -> ${wbid}.${wsid}`)
-		let result = await ZS.zsApi(
-			`https://sheet.zoho.jp/api/v2/${wbid}`,"POST",1,
-			{
-				method:"worksheet.csvdata.set",
-				worksheet_id:wsid,
-				row:1,
-				column:1,
-				ignore_empty:true,
-				data:csv
+	updateSheetViaCsv: async function(wbid, wsid, csv){
+		const MAX_PAYLOAD_SIZE = 50 * 1024; // 100KB
+		const lines = csv.split('\n');
+		let currentChunk = [];
+		let currentSize = 0;
+		let startRow = 1;
+		let results = [];
+
+		const sendChunk = async (chunk, row) => {
+			if (chunk.length === 0) return;
+
+			const chunkCsv = chunk.join('\n');
+			await apiCounter("worksheet.csvdata.set");
+			console.log(`worksheet.csvdata.set -> ${wbid}.${wsid} (rows ${row} to ${row + chunk.length - 1})`);
+
+			let result = await ZS.zsApi(
+				`https://sheet.zoho.jp/api/v2/${wbid}`, "POST", 1,
+				{
+					method: "worksheet.csvdata.set",
+					worksheet_id: wsid,
+					row: row,
+					column: 1,
+					ignore_empty: true,
+					data: chunkCsv
+				}
+			);
+			console.log("### worksheet.csvdata.set result ###");
+			console.log(result);
+			results.push(result);
+		};
+
+		for (const line of lines) {
+			const lineSize = new TextEncoder().encode(line).length; // バイト単位でサイズを計算
+
+			// 現在のチャンクサイズに行のサイズと改行コードのサイズ（最初の行以外）を加えたものが最大ペイロードサイズを超えるかチェック
+			if (currentSize + lineSize + (currentChunk.length > 0 ? 1 : 0) > MAX_PAYLOAD_SIZE) {
+				await sendChunk(currentChunk, startRow);
+				startRow += currentChunk.length;
+				currentChunk = [];
+				currentSize = 0;
 			}
-		)
-		console.log("### worksheet.csvdata.set result ###")
-		console.log(result)
-		return result
+
+			currentChunk.push(line);
+			// 現在のチャンクサイズに行のサイズと改行コードのサイズ（最初の行以外）を加算
+			currentSize += lineSize + (currentChunk.length > 1 ? 1 : 0);
+		}
+
+		// 最後のチャンクを送信
+		if (currentChunk.length > 0) {
+			await sendChunk(currentChunk, startRow);
+		}
+
+		// シンプルにするため、最後のチャンクの結果を返します。
+		// より堅牢な解決策では、結果を集約したり、チャンク全体でエラーを処理したりする可能性があります。
+		return results[results.length - 1];
 	},
 	copySheet: async function(wbid,origWsid,newWsName){
 		await apiCounter("worksheet.copy")
