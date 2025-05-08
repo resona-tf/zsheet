@@ -192,6 +192,7 @@ async function _getDataFromZVarString(ZVarLabels, tabApiName, record){
 			// debugger
 			//関連リストのレコードを取得
 			let relatedRecords = await Z.getRelatedRecords(tabApiName, record.id, ZvarRelatedListInfo.api_name)
+			relatedRecords.sort((a, b) => a.Name.localeCompare(b.Name));
 			let returnValues = []
 			for( relatedRecord of relatedRecords){
 				//関連リストのレコードから、再帰的にデータを取得
