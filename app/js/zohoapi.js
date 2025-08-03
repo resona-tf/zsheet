@@ -388,7 +388,6 @@ ZS = {
 	},
 	shareWorkbook: async function(wbid, share_json){
 		await apiCounter("workbook.share")
-		debugger
 		let result = await ZS.zsApi(
 			`https://sheet.zoho.jp/api/v2/share`,"POST",1,
 			{

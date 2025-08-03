@@ -183,8 +183,14 @@ async function clearingRows(workbookId, sheetId, originalContents) {
     // 4. 削除の実行
     if (deleteRanges.length > 0) {
         for (let range of deleteRanges) {
-            const result = await ZS.deleteRows(workbookId, sheetId, [range])
-            console.log('Delete Range:', range)
+            // Zoho Sheet APIは1ベースのインデックスを使用するため調整
+            const apiRange = {
+                start_row: range.start_row + 1,
+                end_row: range.end_row + 1
+            }
+            const result = await ZS.deleteRows(workbookId, sheetId, [apiRange])
+            console.log('Delete Range (0-based):', range)
+            console.log('Delete Range (1-based for API):', apiRange)
         }
     }
 }
